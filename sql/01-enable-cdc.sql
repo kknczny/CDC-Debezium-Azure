@@ -1,10 +1,18 @@
 USE [WideWorldImporters]
 GO
 
+
+--SELECT owner_sid FROM sys.databases where name = 'WideWorldImporters';
+
+--SELECT sid,* from WideWorldImporters.sys.database_principals WHERE name = 'dbo';
+
+--EXEC sp_dropuser 'SOFTSERVE\jkoni'
+--EXEC sp_changedbowner 'SOFTSERVE\jkoni'
+
 /*
 	Change owner in order to proceed with enabling CDC
 */
-EXEC sp_changedbowner 'sa'
+--EXEC sp_changedbowner 'sa'
 
 /*
 	Enable CDC on database (make sure SQL Server Agent is running!)
