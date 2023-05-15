@@ -32,3 +32,8 @@ GO
 */
 EXEC sys.sp_cdc_help_change_data_capture
 GO
+
+/*FIX - stop and start CDC job*/
+EXEC sys.sp_cdc_start_job
+GO
+EXEC sys.sp_cdc_stop_job
