@@ -1,0 +1,10 @@
+{
+	"name": "cdcstreamingkv",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://cdc-streaming-kv.vault.azure.net/"
+		}
+	}
+}
