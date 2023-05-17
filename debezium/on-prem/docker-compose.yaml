@@ -22,3 +22,10 @@ services:
      - CONNECT_CONSUMER_SECURITY_PROTOCOL=SASL_SSL
      - CONNECT_CONSUMER_SASL_MECHANISM=PLAIN
      - CONNECT_CONSUMER_SASL_JAAS_CONFIG=org.apache.kafka.common.security.plain.PlainLoginModule required username="$$ConnectionString" password="${EH_CONNECTION_STRING}";
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+     - ACCEPT_EULA=Y
+     - MSSQL_SA_PASSWORD=SB_RElDB_CDC_Streaming
+    ports:
+     - 1433:1433

@@ -3,19 +3,20 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # SQL Server Management Studio Solution File, Format Version 19.00
 VisualStudioVersion = 15.0.28307.421
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{4F2E2C19-372F-40D8-9FA7-9D2138C6997A}") = "SB_RelDB_CDC_Streaming", "SB_RelDB_CDC_Streaming\SB_RelDB_CDC_Streaming.ssmssqlproj", "{1D0B47C6-465E-4EED-903B-F50BB4C41A58}"
+Project("{4F2E2C19-372F-40D8-9FA7-9D2138C6997A}") = "SB_RelDB_CDC_Streaming", "SB_RelDB_CDC_Streaming.ssmssqlproj", "{F29BCEB9-E1FE-43AF-909C-73575006B400}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Default|Default = Default|Default
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{1D0B47C6-465E-4EED-903B-F50BB4C41A58}.Default|Default.ActiveCfg = Default
+		{F29BCEB9-E1FE-43AF-909C-73575006B400}.Default|Default.ActiveCfg = Default
+		{9BA09450-99B1-4689-A9D7-2E3FD5B85A37}.Default|Default.ActiveCfg = Default
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {6B55D57C-71BB-4B55-8815-B69DE6CE305B}
+		SolutionGuid = {87A6D9D6-05E1-43E7-8F9A-73ED9A8A3581}
 	EndGlobalSection
 EndGlobal
