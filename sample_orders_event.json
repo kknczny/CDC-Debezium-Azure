@@ -1,0 +1,345 @@
+{
+  "schema": {
+    "type": "struct",
+    "fields": [
+      {
+        "type": "struct",
+        "fields": [
+          {
+            "type": "int32",
+            "optional": false,
+            "field": "OrderID"
+          },
+          {
+            "type": "int32",
+            "optional": false,
+            "field": "CustomerID"
+          },
+          {
+            "type": "int32",
+            "optional": false,
+            "field": "SalespersonPersonID"
+          },
+          {
+            "type": "int32",
+            "optional": true,
+            "field": "PickedByPersonID"
+          },
+          {
+            "type": "int32",
+            "optional": false,
+            "field": "ContactPersonID"
+          },
+          {
+            "type": "int32",
+            "optional": true,
+            "field": "BackorderOrderID"
+          },
+          {
+            "type": "int32",
+            "optional": false,
+            "name": "io.debezium.time.Date",
+            "version": 1,
+            "field": "OrderDate"
+          },
+          {
+            "type": "int32",
+            "optional": false,
+            "name": "io.debezium.time.Date",
+            "version": 1,
+            "field": "ExpectedDeliveryDate"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "CustomerPurchaseOrderNumber"
+          },
+          {
+            "type": "boolean",
+            "optional": false,
+            "field": "IsUndersupplyBackordered"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "Comments"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "DeliveryInstructions"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "InternalComments"
+          },
+          {
+            "type": "int64",
+            "optional": true,
+            "name": "io.debezium.time.NanoTimestamp",
+            "version": 1,
+            "field": "PickingCompletedWhen"
+          },
+          {
+            "type": "int32",
+            "optional": false,
+            "field": "LastEditedBy"
+          },
+          {
+            "type": "int64",
+            "optional": false,
+            "name": "io.debezium.time.NanoTimestamp",
+            "version": 1,
+            "field": "LastEditedWhen"
+          }
+        ],
+        "optional": true,
+        "name": "wwi.Value",
+        "field": "before"
+      },
+      {
+        "type": "struct",
+        "fields": [
+          {
+            "type": "int32",
+            "optional": false,
+            "field": "OrderID"
+          },
+          {
+            "type": "int32",
+            "optional": false,
+            "field": "CustomerID"
+          },
+          {
+            "type": "int32",
+            "optional": false,
+            "field": "SalespersonPersonID"
+          },
+          {
+            "type": "int32",
+            "optional": true,
+            "field": "PickedByPersonID"
+          },
+          {
+            "type": "int32",
+            "optional": false,
+            "field": "ContactPersonID"
+          },
+          {
+            "type": "int32",
+            "optional": true,
+            "field": "BackorderOrderID"
+          },
+          {
+            "type": "int32",
+            "optional": false,
+            "name": "io.debezium.time.Date",
+            "version": 1,
+            "field": "OrderDate"
+          },
+          {
+            "type": "int32",
+            "optional": false,
+            "name": "io.debezium.time.Date",
+            "version": 1,
+            "field": "ExpectedDeliveryDate"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "CustomerPurchaseOrderNumber"
+          },
+          {
+            "type": "boolean",
+            "optional": false,
+            "field": "IsUndersupplyBackordered"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "Comments"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "DeliveryInstructions"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "InternalComments"
+          },
+          {
+            "type": "int64",
+            "optional": true,
+            "name": "io.debezium.time.NanoTimestamp",
+            "version": 1,
+            "field": "PickingCompletedWhen"
+          },
+          {
+            "type": "int32",
+            "optional": false,
+            "field": "LastEditedBy"
+          },
+          {
+            "type": "int64",
+            "optional": false,
+            "name": "io.debezium.time.NanoTimestamp",
+            "version": 1,
+            "field": "LastEditedWhen"
+          }
+        ],
+        "optional": true,
+        "name": "wwi.Value",
+        "field": "after"
+      },
+      {
+        "type": "struct",
+        "fields": [
+          {
+            "type": "string",
+            "optional": false,
+            "field": "version"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "connector"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "name"
+          },
+          {
+            "type": "int64",
+            "optional": false,
+            "field": "ts_ms"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "name": "io.debezium.data.Enum",
+            "version": 1,
+            "parameters": {
+              "allowed": "true,last,false,incremental"
+            },
+            "default": "false",
+            "field": "snapshot"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "db"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "sequence"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "schema"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "table"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "change_lsn"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "commit_lsn"
+          },
+          {
+            "type": "int64",
+            "optional": true,
+            "field": "event_serial_no"
+          }
+        ],
+        "optional": false,
+        "name": "io.debezium.connector.sqlserver.Source",
+        "field": "source"
+      },
+      {
+        "type": "string",
+        "optional": false,
+        "field": "op"
+      },
+      {
+        "type": "int64",
+        "optional": true,
+        "field": "ts_ms"
+      },
+      {
+        "type": "struct",
+        "fields": [
+          {
+            "type": "string",
+            "optional": false,
+            "field": "id"
+          },
+          {
+            "type": "int64",
+            "optional": false,
+            "field": "total_order"
+          },
+          {
+            "type": "int64",
+            "optional": false,
+            "field": "data_collection_order"
+          }
+        ],
+        "optional": true,
+        "field": "transaction"
+      }
+    ],
+    "optional": false,
+    "name": "wwi.Envelope"
+  },
+  "payload": {
+    "before": null,
+    "after": {
+      "OrderID": 73622,
+      "CustomerID": 594,
+      "SalespersonPersonID": 14,
+      "PickedByPersonID": null,
+      "ContactPersonID": 2387,
+      "BackorderOrderID": null,
+      "OrderDate": 19495,
+      "ExpectedDeliveryDate": 19496,
+      "CustomerPurchaseOrderNumber": "4305",
+      "IsUndersupplyBackordered": false,
+      "Comments": "Auto-generated",
+      "DeliveryInstructions": "Shop 55, 607 Szolosy Street",
+      "InternalComments": null,
+      "PickingCompletedWhen": null,
+      "LastEditedBy": 14,
+      "LastEditedWhen": 1684415822927976200
+    },
+    "source": {
+      "version": "1.9.7.Final",
+      "connector": "sqlserver",
+      "name": "localhost",
+      "ts_ms": 1684408622940,
+      "snapshot": "false",
+      "db": "WideWorldImporters",
+      "sequence": null,
+      "schema": "Sales",
+      "table": "Orders",
+      "change_lsn": "0000005b:00002786:0002",
+      "commit_lsn": "0000005b:000027fe:0005",
+      "event_serial_no": 1
+    },
+    "op": "c",
+    "ts_ms": 1684408628126,
+    "transaction": null
+  }
+}

@@ -1,7 +1,7 @@
 use [WideWorldImporters]
-select * from [cdc].[Sales_Orders_CT]
+select LastEditedWhen, * from [cdc].[Sales_Orders_CT]
 
-select * from [cdc].[Warehouse_StockItems_CT]
+select ValidFrom, * from [cdc].[Warehouse_StockItems_CT]
 
 --select * from [cdc].[ddl_history]
 
