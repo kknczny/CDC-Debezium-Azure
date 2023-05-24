@@ -1,0 +1,167 @@
+{
+	"name": "event_hubs_streaming",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "cdcsparkpool",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "f9c01963-16a9-4452-a61f-55bb658398d3"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/91b6e3ed-6c42-4e7a-8ed3-57f49a2a42ba/resourceGroups/SB_RelDB_CDC_Streaming/providers/Microsoft.Synapse/workspaces/asa-cdc-streaming/bigDataPools/cdcsparkpool",
+				"name": "cdcsparkpool",
+				"type": "Spark",
+				"endpoint": "https://asa-cdc-streaming.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/cdcsparkpool",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 10,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"keyVaultName = \"cdc-streaming-kv2\";\r\n",
+					"secretName = \"eh-connstring\";\r\n",
+					"connectionString = mssparkutils.credentials.getSecret(keyVaultName, secretName)\r\n",
+					"ehConf = {\r\n",
+					"  'eventhubs.connectionString' : connectionString\r\n",
+					"}"
+				],
+				"execution_count": 12
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def write2table(df2, epoch_id):\r\n",
+					"    df2.write.mode(\"append\").saveAsTable(\"default.eventhubdata\")"
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df = spark \\\r\n",
+					"    .readStream \\\r\n",
+					"    .format(\"eventhubs\") \\\r\n",
+					"    .options(**ehConf) \\\r\n",
+					"  .load()"
+				],
+				"execution_count": 9
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df1 = df.withColumn(\"body\", df[\"body\"].cast(\"string\"))"
+				],
+				"execution_count": 10
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\r\n",
+					"# Simple batch query\r\n",
+					"df = spark \\\r\n",
+					"  .read \\\r\n",
+					"  .format(\"eventhubs\") \\\r\n",
+					"  .options(**ehConf) \\\r\n",
+					"  .load()\r\n",
+					"df = df.withColumn(\"body\", df[\"body\"].cast(\"string\"))"
+				],
+				"execution_count": 15
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
+			}
+		]
+	}
+}
