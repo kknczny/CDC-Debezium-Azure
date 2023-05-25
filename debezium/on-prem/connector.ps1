@@ -8,6 +8,8 @@ Invoke-RestMethod http://localhost:8083/connectors
 
 # Connector Status
 Invoke-RestMethod http://localhost:8083/connectors/wwi/status
+Invoke-RestMethod http://localhost:8083/connectors/wwi2/status
 
 # Delete Connectors
 Invoke-RestMethod http://localhost:8083/connectors/wwi -Method DELETE
+Invoke-RestMethod http://localhost:8083/connectors/wwi2 -Method DELETE
