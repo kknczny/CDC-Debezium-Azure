@@ -7,7 +7,6 @@ import insert_queries
 
 load_dotenv(verbose=True)
 
-
 server = "localhost"
 database = os.getenv('database')
 username = os.getenv('SQL_username')
@@ -50,4 +49,4 @@ def execute(num_reruns = 0, sleep_secs = 10):
         run += 1
     
 if __name__ == "__main__":
-    execute(num_reruns=2, sleep_secs=10)
+    execute(num_reruns=5, sleep_secs=2)
