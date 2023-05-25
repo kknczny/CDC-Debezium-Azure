@@ -104,4 +104,3 @@ FROM [DBO].[TRANSACTIONS]
 
 -- SELECT CDC
 select * from [cdc].[dbo_Transactions_CT]
-where TRAN_ACCOUNT_NO = 50000006
