@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "f9c01963-16a9-4452-a61f-55bb658398d3"
+				"spark.autotune.trackingId": "bd19a5fd-925a-419c-8fd1-13b66ba9651b"
 			}
 		},
 		"metadata": {
@@ -51,98 +51,59 @@
 			{
 				"cell_type": "code",
 				"source": [
-					"keyVaultName = \"cdc-streaming-kv2\";\r\n",
-					"secretName = \"eh-connstring\";\r\n",
-					"connectionString = mssparkutils.credentials.getSecret(keyVaultName, secretName)\r\n",
-					"ehConf = {\r\n",
-					"  'eventhubs.connectionString' : connectionString\r\n",
-					"}"
-				],
-				"execution_count": 12
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"def write2table(df2, epoch_id):\r\n",
-					"    df2.write.mode(\"append\").saveAsTable(\"default.eventhubdata\")"
-				],
-				"execution_count": 8
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"df = spark \\\r\n",
-					"    .readStream \\\r\n",
-					"    .format(\"eventhubs\") \\\r\n",
-					"    .options(**ehConf) \\\r\n",
-					"  .load()"
-				],
-				"execution_count": 9
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"df1 = df.withColumn(\"body\", df[\"body\"].cast(\"string\"))"
-				],
-				"execution_count": 10
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
+					"import json\r\n",
+					"from pyspark.sql.functions import col\r\n",
 					"\r\n",
-					"# Simple batch query\r\n",
-					"df = spark \\\r\n",
-					"  .read \\\r\n",
+					"keyVaultName = \"cdc-streaming-kv2\"\r\n",
+					"secretName = \"eh-connstring\"\r\n",
+					"connectionString = mssparkutils.credentials.getSecret(keyVaultName, secretName)\r\n",
+					"EH_name = \"transactions3\"\r\n",
+					"connectionStringEntity = connectionString + \";EntityPath=\" + EH_name\r\n",
+					"consumer_group = \"transactions_consumer\"\r\n",
+					"\r\n",
+					"checkpoint_location = \"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/staging/transactions/checkpoint/\"\r\n",
+					"output_location = \"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/staging/transactions/output/\"\r\n",
+					"\r\n",
+					"# Create the starting position Dictionary\r\n",
+					"startingEventPosition = {\r\n",
+					"  \"offset\": \"-1\",         \r\n",
+					"  \"seqNo\": 0,                   # not in use\r\n",
+					"  \"enqueuedTime\": None,         # not in use\r\n",
+					"  \"isInclusive\": True,\r\n",
+					"  \"fromStartOfStream\": True     # start from beginning of Stream\r\n",
+					"}\r\n",
+					"\r\n",
+					"ehConf = {\r\n",
+					"  \"eventhubs.startingPosition\" : json.dumps(startingEventPosition),\r\n",
+					"  \"setMaxEventsPerTrigger\" : 100,\r\n",
+					"  \"eventhubs.consumerGroup\" : consumer_group\r\n",
+					"}\r\n",
+					"\r\n",
+					"ehConf[\"eventhubs.connectionString\"] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionStringEntity)"
+				],
+				"execution_count": 66
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_raw = spark \\\r\n",
+					"  .readStream \\\r\n",
 					"  .format(\"eventhubs\") \\\r\n",
 					"  .options(**ehConf) \\\r\n",
-					"  .load()\r\n",
-					"df = df.withColumn(\"body\", df[\"body\"].cast(\"string\"))"
+					"  .load()"
 				],
-				"execution_count": 15
+				"execution_count": 67
 			},
 			{
 				"cell_type": "code",
@@ -158,9 +119,67 @@
 					}
 				},
 				"source": [
-					""
+					"# Check if is streaming\r\n",
+					"df_raw.isStreaming"
 				],
-				"execution_count": null
+				"execution_count": 68
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import *\r\n",
+					"\r\n",
+					"# Streaming Query in scheduler pool\r\n",
+					"spark.sparkContext.setLocalProperty(\"spark.scheduler.pool\", \"pool0\")\r\n",
+					"\r\n",
+					"CDC_query = df_raw \\\r\n",
+					"    .withColumn(\"year\", year(\"enqueuedTime\"))   \\\r\n",
+					"    .withColumn(\"month\", month(\"enqueuedTime\"))   \\\r\n",
+					"    .withColumn(\"day\", dayofmonth(\"enqueuedTime\"))   \\\r\n",
+					"    .withColumn(\"hour\", hour(\"enqueuedTime\"))   \\\r\n",
+					"    .writeStream    \\\r\n",
+					"    .queryName(\"CDC_query\") \\\r\n",
+					"    .format(\"parquet\")  \\\r\n",
+					"    .partitionBy(\"year\", \"month\", \"day\", \"hour\")    \\\r\n",
+					"    .outputMode(\"append\")   \\\r\n",
+					"    .option(\"checkpointLocation\", checkpoint_location)   \\\r\n",
+					"    .option(\"path\", output_location)    \\\r\n",
+					"    .start()"
+				],
+				"execution_count": 71
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Check the status of query\r\n",
+					"\r\n",
+					"print(CDC_query.isActive)\r\n",
+					"print(\"-----\")\r\n",
+					"CDC_query.exception()"
+				],
+				"execution_count": 72
 			}
 		]
 	}
