@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "bd19a5fd-925a-419c-8fd1-13b66ba9651b"
+				"spark.autotune.trackingId": "08a2340e-ef28-42b3-b71a-96e70d298098"
 			}
 		},
 		"metadata": {
@@ -61,8 +61,8 @@
 					"connectionStringEntity = connectionString + \";EntityPath=\" + EH_name\r\n",
 					"consumer_group = \"transactions_consumer\"\r\n",
 					"\r\n",
-					"checkpoint_location = \"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/staging/transactions/checkpoint/\"\r\n",
-					"output_location = \"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/staging/transactions/output/\"\r\n",
+					"checkpoint_location = \"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/transactions/checkpoint/\"\r\n",
+					"output_location = \"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/transactions/output/\"\r\n",
 					"\r\n",
 					"# Create the starting position Dictionary\r\n",
 					"startingEventPosition = {\r\n",
@@ -179,7 +179,25 @@
 					"print(\"-----\")\r\n",
 					"CDC_query.exception()"
 				],
-				"execution_count": 72
+				"execution_count": 76
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			}
 		]
 	}

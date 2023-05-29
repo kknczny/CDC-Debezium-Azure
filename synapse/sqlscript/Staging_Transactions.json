@@ -1,0 +1,17 @@
+{
+	"name": "Staging_Transactions",
+	"properties": {
+		"content": {
+			"query": "USE [CDC-SYNAPSE]\n\nIF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'Staging' AND TABLE_NAME = 'Transactions')\n    DROP EXTERNAL TABLE [Staging].[Transactions]\nGO\n\nCREATE EXTERNAL TABLE [Staging].[Transactions]\n(\n\t[TRAN_CREATE_BY] [nvarchar](max),\n\t[TRAN_CREATE_DATE] [datetime],\n\t[TRAN_SEQNO] [int],\n\t[TRAN_ACCOUNT_NO] [int],\n\t[TRAN_SUBACC_NO] [int],\n\t[TRAN_REVERSAL_IND] [varchar](1),\n\t[TRAN_SOC_SEQNO] [int],\n\t--[TRAN_BRN_CODE] [varchar](4),\n\t[TRAN_ACT_CODE] [varchar](6),\n\t[TRAN_GACT_TYPE] [varchar](1),\n\t[TRAN_GTRANS_TYPE] [varchar](3),\n\t[TRAN_CLASS] [varchar](6),\n\t[TRAN_TRANS_CODE] [varchar](6),\n\t[TRAN_REFERENCE] [varchar](max),\n\t--[TRAN_AMOUNT_DB] [float],\n\t[TRAN_AMOUNT_CR] [float](2)\n)\nWITH\n(\n\tLOCATION = '/transactions',\n\tDATA_SOURCE = [TRAN_STAGING],\n\tFILE_FORMAT = [ParquetFF]\n)\nAS\nSELECT P.*\nFROM OPENROWSET(\n    BULK 'output/year=*/month=*/day=*/hour=*/*.parquet',\n    DATA_SOURCE = 'TRAN_LANDING',\n    FORMAT = 'PARQUET'\n) AS P",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "cdc-synapse",
+				"poolName": "Built-in"
+			},
+			"resultLimit": -1
+		},
+		"type": "SqlQuery"
+	}
+}
