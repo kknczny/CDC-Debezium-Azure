@@ -1,4 +1,4 @@
 *\.env
 *\local.settings.json.template
 \_envs
-\testing\__pycache__
+\python\__pycache__
