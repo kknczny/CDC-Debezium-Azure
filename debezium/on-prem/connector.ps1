@@ -18,3 +18,4 @@ Invoke-RestMethod http://localhost:8083/connectors/transactions/status
 # Delete Connectors
 Invoke-RestMethod http://localhost:8083/connectors/wwi -Method DELETE
 Invoke-RestMethod http://localhost:8083/connectors/wwi2 -Method DELETE
+Invoke-RestMethod http://localhost:8083/connectors/transactions -Method DELETE
