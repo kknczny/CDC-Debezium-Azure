@@ -48,4 +48,4 @@ def execute(num_reruns = 0, sleep_secs = 10):
         run += 1
     
 if __name__ == "__main__":
-    execute(num_reruns=100, sleep_secs=15)
+    execute(num_reruns=1, sleep_secs=15)
