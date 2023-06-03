@@ -7,7 +7,7 @@ Invoke-RestMethod http://localhost:8083/connectors/ -Method POST -Body $JSON -Co
 Invoke-RestMethod http://localhost:8083/connectors
 
 # Connector Status
-Invoke-RestMethod http://localhost:8083/connectors/wwi/status
+Invoke-RestMethod http://localhost:8083/connectors/wwi-00/status
 
 # Delete Connectors
-Invoke-RestMethod http://localhost:8083/connectors/wwi -Method DELETE
+Invoke-RestMethod http://localhost:8083/connectors/wwi-00 -Method DELETE
