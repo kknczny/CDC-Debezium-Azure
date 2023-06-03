@@ -1,2 +1,4 @@
 *\.env
 *\local.settings.json.template
+\_envs
+\python\__pycache__
