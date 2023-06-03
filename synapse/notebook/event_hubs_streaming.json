@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "08a2340e-ef28-42b3-b71a-96e70d298098"
+				"spark.autotune.trackingId": "5cecabf7-d740-40d8-918f-fb5d768ac2b3"
 			}
 		},
 		"metadata": {
@@ -52,17 +52,18 @@
 				"cell_type": "code",
 				"source": [
 					"import json\r\n",
-					"from pyspark.sql.functions import col\r\n",
+					"from pyspark.sql.functions import *\r\n",
+					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType\r\n",
 					"\r\n",
 					"keyVaultName = \"cdc-streaming-kv2\"\r\n",
 					"secretName = \"eh-connstring\"\r\n",
 					"connectionString = mssparkutils.credentials.getSecret(keyVaultName, secretName)\r\n",
-					"EH_name = \"transactions3\"\r\n",
+					"EH_name = \"wwi-00\"\r\n",
 					"connectionStringEntity = connectionString + \";EntityPath=\" + EH_name\r\n",
-					"consumer_group = \"transactions_consumer\"\r\n",
+					"consumer_group = \"$Default\"\r\n",
 					"\r\n",
-					"checkpoint_location = \"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/transactions/checkpoint/\"\r\n",
-					"output_location = \"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/transactions/output/\"\r\n",
+					"checkpoint_loc = \"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/orders/checkpoint/\"\r\n",
+					"output_loc = \"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/orders/output/\"\r\n",
 					"\r\n",
 					"# Create the starting position Dictionary\r\n",
 					"startingEventPosition = {\r\n",
@@ -81,7 +82,7 @@
 					"\r\n",
 					"ehConf[\"eventhubs.connectionString\"] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionStringEntity)"
 				],
-				"execution_count": 66
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -103,7 +104,7 @@
 					"  .options(**ehConf) \\\r\n",
 					"  .load()"
 				],
-				"execution_count": 67
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -120,9 +121,11 @@
 				},
 				"source": [
 					"# Check if is streaming\r\n",
-					"df_raw.isStreaming"
+					"print(df_raw.isStreaming)\r\n",
+					"print(\"-----\")\r\n",
+					"df_raw.printSchema()"
 				],
-				"execution_count": 68
+				"execution_count": 30
 			},
 			{
 				"cell_type": "code",
@@ -138,8 +141,150 @@
 					}
 				},
 				"source": [
-					"from pyspark.sql.functions import *\r\n",
-					"\r\n",
+					"schema = StructType([\r\n",
+					"    StructField(\"schema\", StructType([\r\n",
+					"        StructField(\"type\", StringType()),\r\n",
+					"        StructField(\"fields\", StructType([\r\n",
+					"            StructField(\"type\", StringType()),\r\n",
+					"            StructField(\"optional\", BooleanType()),\r\n",
+					"            StructField(\"field\", StringType())\r\n",
+					"        ])),\r\n",
+					"        StructField(\"optional\", BooleanType()),\r\n",
+					"        StructField(\"name\", StringType())\r\n",
+					"    ])),\r\n",
+					"    StructField(\"payload\", StructType([\r\n",
+					"        StructField(\"before\", StructType([\r\n",
+					"            StructField(\"TRAN_CREATE_BY\", StringType()),\r\n",
+					"            StructField(\"TRAN_CREATE_DATE\", LongType()),\r\n",
+					"            StructField(\"TRAN_SEQNO\", IntegerType()),\r\n",
+					"            StructField(\"TRAN_ACCOUNT_NO\", IntegerType()),\r\n",
+					"            StructField(\"TRAN_SUBACC_NO\", IntegerType()),\r\n",
+					"            StructField(\"TRAN_REVERSAL_IND\", StringType()),\r\n",
+					"            StructField(\"TRAN_SOC_SEQNO\", IntegerType()),\r\n",
+					"            StructField(\"TRAN_ACT_CODE\", StringType()),\r\n",
+					"            StructField(\"TRAN_GACT_TYPE\", StringType()),\r\n",
+					"            StructField(\"TRAN_GTRANS_TYPE\", StringType()),\r\n",
+					"            StructField(\"TRAN_CLASS\", StringType()),\r\n",
+					"            StructField(\"TRAN_TRANS_CODE\", StringType()),\r\n",
+					"            StructField(\"TRAN_REFERENCE\", StringType()),\r\n",
+					"            StructField(\"TRAN_AMOUNT_CR\", FloatType())\r\n",
+					"        ])),\r\n",
+					"        StructField(\"after\", StructType([\r\n",
+					"            StructField(\"TRAN_CREATE_BY\", StringType()),\r\n",
+					"            StructField(\"TRAN_CREATE_DATE\", LongType()),\r\n",
+					"            StructField(\"TRAN_SEQNO\", IntegerType()),\r\n",
+					"            StructField(\"TRAN_ACCOUNT_NO\", IntegerType()),\r\n",
+					"            StructField(\"TRAN_SUBACC_NO\", IntegerType()),\r\n",
+					"            StructField(\"TRAN_REVERSAL_IND\", StringType()),\r\n",
+					"            StructField(\"TRAN_SOC_SEQNO\", IntegerType()),\r\n",
+					"            StructField(\"TRAN_ACT_CODE\", StringType()),\r\n",
+					"            StructField(\"TRAN_GACT_TYPE\", StringType()),\r\n",
+					"            StructField(\"TRAN_GTRANS_TYPE\", StringType()),\r\n",
+					"            StructField(\"TRAN_CLASS\", StringType()),\r\n",
+					"            StructField(\"TRAN_TRANS_CODE\", StringType()),\r\n",
+					"            StructField(\"TRAN_REFERENCE\", StringType()),\r\n",
+					"            StructField(\"TRAN_AMOUNT_CR\", FloatType())\r\n",
+					"        ])),\r\n",
+					"        StructField(\"source\", StructType([\r\n",
+					"            StructField(\"version\", StringType()),\r\n",
+					"            StructField(\"connector\", StringType()),\r\n",
+					"            StructField(\"name\", StringType()),\r\n",
+					"            StructField(\"ts_ms\", LongType()),\r\n",
+					"            StructField(\"snapshot\", StringType()),\r\n",
+					"            StructField(\"db\", StringType()),\r\n",
+					"            StructField(\"sequence\", StringType()),\r\n",
+					"            StructField(\"schema\", StringType()),\r\n",
+					"            StructField(\"table\", StringType()),\r\n",
+					"            StructField(\"change_lsn\", StringType()),\r\n",
+					"            StructField(\"commit_lsn\", StringType()),\r\n",
+					"            StructField(\"event_serial_no\", LongType())\r\n",
+					"        ])),\r\n",
+					"        StructField(\"op\", StringType()),\r\n",
+					"        StructField(\"ts_ms\", LongType()),\r\n",
+					"        StructField(\"transaction\", StructType([\r\n",
+					"            StructField(\"id\", StringType()),\r\n",
+					"            StructField(\"total_order\", LongType()),\r\n",
+					"            StructField(\"data_collection_order\", LongType())\r\n",
+					"        ]))\r\n",
+					"    ]))\r\n",
+					"])"
+				],
+				"execution_count": 31
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_select = df_raw \\\r\n",
+					"    .select(from_json(col(\"body\").cast(\"string\"), schema).alias(\"parsed_body\"))"
+				],
+				"execution_count": 33
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_select.printSchema()"
+				],
+				"execution_count": 34
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"query_test = df_select  \\\r\n",
+					"    .writeStream    \\\r\n",
+					"    .outputMode(\"append\")   \\\r\n",
+					"    .option(\"checkpointLocation\", checkpoint_loc)   \\\r\n",
+					"    .option(\"path\", output_loc)    \\\r\n",
+					"    .start()"
+				],
+				"execution_count": 37
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"# Streaming Query in scheduler pool\r\n",
 					"spark.sparkContext.setLocalProperty(\"spark.scheduler.pool\", \"pool0\")\r\n",
 					"\r\n",
@@ -153,11 +298,11 @@
 					"    .format(\"parquet\")  \\\r\n",
 					"    .partitionBy(\"year\", \"month\", \"day\", \"hour\")    \\\r\n",
 					"    .outputMode(\"append\")   \\\r\n",
-					"    .option(\"checkpointLocation\", checkpoint_location)   \\\r\n",
-					"    .option(\"path\", output_location)    \\\r\n",
+					"    .option(\"checkpointLocation\", checkpoint_loc)   \\\r\n",
+					"    .option(\"path\", output_loc)    \\\r\n",
 					"    .start()"
 				],
-				"execution_count": 71
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -179,7 +324,7 @@
 					"print(\"-----\")\r\n",
 					"CDC_query.exception()"
 				],
-				"execution_count": 76
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
