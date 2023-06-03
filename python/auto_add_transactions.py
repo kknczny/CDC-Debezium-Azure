@@ -3,7 +3,7 @@ from time import sleep
 from dotenv import load_dotenv
 import os
 from random import randrange
-import insert_queries
+import transaction_insert_queries
 
 load_dotenv(verbose=True)
 
@@ -41,7 +41,7 @@ def execute(num_reruns = 0, sleep_secs = 10):
     while run <= num_reruns:
         query_no = randrange(1,4)
         query_name = f"insert_query_{query_no}"
-        query = getattr(insert_queries, query_name)
+        query = getattr(transaction_insert_queries, query_name)
         run_query(cursor, query)
         print(f"Query \"{query_name}\" runned. Waiting {sleep_secs} sec(s) for next query execution if awaiting ({run}/{num_reruns}).")
         sleep(sleep_secs)

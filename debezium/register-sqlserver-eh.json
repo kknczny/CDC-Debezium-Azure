@@ -1,5 +1,5 @@
 {
-    "name": "wwi2",
+    "name": "wwi-00",
     "config": {
         "snapshot.mode": "schema_only",
         "connector.class": "io.debezium.connector.sqlserver.SqlServerConnector",
@@ -12,12 +12,12 @@
         "database.encrypt": "false",
         "tasks.max": "1",
         "decimal.handling.mode": "string",
-        "table.include.list": "Sales.Orders,Warehouse.StockItems,dbo.TRANSACTIONS",
+        "table.include.list": "Sales.Orders,Warehouse.StockItems",
         "topic.prefix": ".",
         "transforms": "Reroute",
         "transforms.Reroute.type": "io.debezium.transforms.ByLogicalTableRouter",
         "transforms.Reroute.topic.regex": "(.*)",
-        "transforms.Reroute.topic.replacement": "wwi2",
+        "transforms.Reroute.topic.replacement": "wwi-00",
         "tombstones.on.delete": false,
         "database.history": "io.debezium.relational.history.MemoryDatabaseHistory"
     }
