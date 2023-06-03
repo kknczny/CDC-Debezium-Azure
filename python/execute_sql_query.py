@@ -3,7 +3,6 @@ from time import sleep
 from dotenv import load_dotenv
 import os
 from random import randrange
-import transaction_insert_queries
 
 load_dotenv(verbose=True)
 
@@ -12,7 +11,7 @@ database = os.getenv('database')
 username = os.getenv('SQL_username')
 password = os.getenv('SQL_password')
 
-cnxn = pyodbc.connect(
+conn = pyodbc.connect(
     """Driver={ODBC Driver 17 for SQL Server};
     Server="""+server+""";
     Database="""+database+""";
@@ -28,24 +27,35 @@ def run_query(cursor, query):
         cursor.commit()
     except pyodbc.Error as e:
         raise e
-    
-
-# Random int in range 1-5 and then execute one of the queries
-# Wait 10 sec (<<>>to check what is average distance between transactions in Summit)
-    
-def execute(num_reruns = 0, sleep_secs = 10):
+        
+def execute(num_reruns = 0, sleep_secs = 10, script = 'neworder'):
     if num_reruns <= 0 or num_reruns > 1000:
         num_reruns = 1000
-    cursor = cnxn.cursor()
+    
+    if script.lower() == 'neworder':
+        query_name = '02-create-new-sales-order.sql'
+    elif script.lower() == 'modifystock':
+        query_name = '03-modify-warehouse-stock.sql'
+    else:
+        raise ValueError(f"Incorrect \"script\" argument value \"{script}\".")  
+    
+    os.chdir("../sql")
+    sqlfile = open(query_name, 'r')
+    sqlfile.readline()  #First line use statement
+    query = sqlfile.read()  #Rest of query
+    query = query.replace("GO", "")
+    
+    cursor = conn.cursor()
     run = 1
+    
     while run <= num_reruns:
-        query_no = randrange(1,4)
-        query_name = f"insert_query_{query_no}"
-        query = getattr(transaction_insert_queries, query_name)
         run_query(cursor, query)
-        print(f"Query \"{query_name}\" runned. Waiting {sleep_secs} sec(s) for next query execution if awaiting ({run}/{num_reruns}).")
+        print(f"Query \"{query_name}\" runned. Waiting {sleep_secs} sec(s) \
+            for next query execution if awaiting ({run}/{num_reruns}).")
         sleep(sleep_secs)
         run += 1
     
+    sqlfile.close()
+    
 if __name__ == "__main__":
-    execute(num_reruns=1, sleep_secs=15)
+    execute(num_reruns=1, sleep_secs=15, script='neworder')
