@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "08a2340e-ef28-42b3-b71a-96e70d298098"
+				"spark.autotune.trackingId": "287d2fc3-89eb-48d9-999d-c0d384a75af4"
 			}
 		},
 		"metadata": {
@@ -173,8 +173,7 @@
 					}
 				},
 				"source": [
-					"# Check the status of query\r\n",
-					"\r\n",
+					"# Check the status of quer\r\n",
 					"print(CDC_query.isActive)\r\n",
 					"print(\"-----\")\r\n",
 					"CDC_query.exception()"
