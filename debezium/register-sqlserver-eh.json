@@ -1,5 +1,5 @@
 {
-    "name": "wwi-00",
+    "name": "wwi-03",
     "config": {
         "snapshot.mode": "schema_only",
         "connector.class": "io.debezium.connector.sqlserver.SqlServerConnector",
@@ -17,7 +17,7 @@
         "transforms": "Reroute",
         "transforms.Reroute.type": "io.debezium.transforms.ByLogicalTableRouter",
         "transforms.Reroute.topic.regex": "(.*)",
-        "transforms.Reroute.topic.replacement": "wwi-00",
+        "transforms.Reroute.topic.replacement": "wwi-03",
         "tombstones.on.delete": false,
         "database.history": "io.debezium.relational.history.MemoryDatabaseHistory"
     }

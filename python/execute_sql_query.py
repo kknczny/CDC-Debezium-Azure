@@ -1,5 +1,5 @@
 import pyodbc
-from time import sleep
+from time import sleep, strftime
 from dotenv import load_dotenv
 import os
 from random import randrange
@@ -49,9 +49,10 @@ def execute(num_reruns = 0, sleep_secs = 10, script = 'neworder'):
     run = 1
     
     while run <= num_reruns:
+        now = strftime("%H:%M:%S")
         run_query(cursor, query)
-        print(f"Query \"{query_name}\" runned. Waiting {sleep_secs} sec(s) \
-            for next query execution if awaiting ({run}/{num_reruns}).")
+        print(f"{now} - Query \"{query_name}\" executed. Waiting {sleep_secs} sec(s) \
+        for next query execution if awaiting ({run}/{num_reruns}).")
         sleep(sleep_secs)
         run += 1
     
