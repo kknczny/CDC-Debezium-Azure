@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "2d7c2c95-99f3-439d-9c58-4d13c0a53e04"
+				"spark.autotune.trackingId": "dfd3c7f5-5ff6-4ec9-8f08-5f656fc5b579"
 			}
 		},
 		"metadata": {
@@ -50,12 +50,28 @@
 		"cells": [
 			{
 				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
 				"source": [
 					"import json\r\n",
 					"from pyspark.sql.functions import *\r\n",
-					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType\r\n",
-					"# from schema_build import spark_avro_deserializer\r\n",
-					"\r\n",
+					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType, TimestampType\r\n",
+					"# from schema_build import spark_avro_deserializer"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"source": [
 					"keyVaultName = \"cdc-streaming-kv2\"\r\n",
 					"secretName = \"eh-connstring\"\r\n",
 					"connectionString = mssparkutils.credentials.getSecret(keyVaultName, secretName)\r\n",
@@ -83,7 +99,7 @@
 					"\r\n",
 					"ehConf[\"eventhubs.connectionString\"] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionStringEntity)"
 				],
-				"execution_count": 2
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -107,7 +123,7 @@
 					"\r\n",
 					"df_parsed = df_raw.withColumn(\"parsed\", col(\"body\").cast(\"string\"))"
 				],
-				"execution_count": null
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -128,7 +144,7 @@
 					"print(\"-----\")\r\n",
 					"df_raw.printSchema()"
 				],
-				"execution_count": null
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -149,7 +165,68 @@
 					"print(\"-----\")\r\n",
 					"df_parsed.printSchema()"
 				],
-				"execution_count": null
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"##to be deleted once schema-build package will be assigned to spark pool\r\n",
+					"from io import BytesIO\r\n",
+					"from pyspark.sql.functions import udf\r\n",
+					"\r\n",
+					"def get_schema(schema_id: str) -> dict:\r\n",
+					"    if not schema_registry.schemas:\r\n",
+					"        try_to_fetch_all_schemas()\r\n",
+					"    return schema_registry.get_schema(schema_id)\r\n",
+					"\r\n",
+					"\r\n",
+					"class __ContextStringIO(BytesIO):\r\n",
+					"    \"\"\"\r\n",
+					"    Wrapper to allow use of StringIO via 'with' constructs.\r\n",
+					"    \"\"\"\r\n",
+					"\r\n",
+					"    def __enter__(self):\r\n",
+					"        return self\r\n",
+					"\r\n",
+					"    def __exit__(self, *args):\r\n",
+					"        self.close()\r\n",
+					"        return False\r\n",
+					"\r\n",
+					"\r\n",
+					"@udf(returnType=StringType())\r\n",
+					"def spark_avro_deserializer(value) -> json:\r\n",
+					"    _MAGIC_BYTE = 0\r\n",
+					"\r\n",
+					"    if value is None:\r\n",
+					"        return None\r\n",
+					"\r\n",
+					"    if len(value) <= 5:\r\n",
+					"        raise SerializationError(\"Message too small. This message was not\"\r\n",
+					"                                 \" produced with a Confluent\"\r\n",
+					"                                 \" Schema Registry serializer\")\r\n",
+					"    with __ContextStringIO(value) as payload:\r\n",
+					"        magic, schema_id = unpack('>bI', payload.read(5))\r\n",
+					"        if magic != _MAGIC_BYTE:\r\n",
+					"            raise SerializationError(\"Unknown magic byte. This message was\"\r\n",
+					"                                     \" not produced with a Confluent\"\r\n",
+					"                                     \" Schema Registry serializer\")\r\n",
+					"        parsed_schema = parse_schema(get_schema(schema_id))\r\n",
+					"        obj_dict = schemaless_reader(payload, parsed_schema)\r\n",
+					"        return json.dumps(obj_dict)\r\n",
+					""
+				],
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -199,7 +276,7 @@
 					"    )\r\n",
 					""
 				],
-				"execution_count": null
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -216,14 +293,14 @@
 				},
 				"source": [
 					"cdc_schema = get_cdc_schema('orders')\r\n",
-					"df_deserialized = df_parsed.select(spark_avro_deserializer(col('value')).alias('value')) \\\r\n",
+					"df_deserialized = df_parsed.select(spark_avro_deserializer(col('parsed')).alias('value')) \\\r\n",
 					"    .withColumn('value', from_json('value', cdc_schema))    \\\r\n",
 					"    .select(    \\\r\n",
 					"    'value.op', \\\r\n",
 					"    'value.after.*',  \\\r\n",
 					"    (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts')) "
 				],
-				"execution_count": null
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -241,7 +318,7 @@
 				"source": [
 					"df_deserialized.printSchema()"
 				],
-				"execution_count": null
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -352,7 +429,7 @@
 					"    .option(\"path\", output_loc)    \\\r\n",
 					"    .start()"
 				],
-				"execution_count": null
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -373,6 +450,24 @@
 					"print(CDC_query.isActive)\r\n",
 					"print(\"-----\")\r\n",
 					"print(CDC_query.exception())"
+				],
+				"execution_count": 21
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
 				],
 				"execution_count": null
 			}
