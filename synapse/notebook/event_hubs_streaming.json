@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "94f9d27b-5eff-4f08-a79f-79607d7544e0"
+				"spark.autotune.trackingId": "2d7c2c95-99f3-439d-9c58-4d13c0a53e04"
 			}
 		},
 		"metadata": {
@@ -54,7 +54,7 @@
 					"import json\r\n",
 					"from pyspark.sql.functions import *\r\n",
 					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType\r\n",
-					"from schema_build import spark_avro_deserializer\r\n",
+					"# from schema_build import spark_avro_deserializer\r\n",
 					"\r\n",
 					"keyVaultName = \"cdc-streaming-kv2\"\r\n",
 					"secretName = \"eh-connstring\"\r\n",
@@ -83,7 +83,7 @@
 					"\r\n",
 					"ehConf[\"eventhubs.connectionString\"] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionStringEntity)"
 				],
-				"execution_count": 5
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
