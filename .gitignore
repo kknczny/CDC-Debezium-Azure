@@ -2,4 +2,4 @@
 **/local.settings.json.template
 /_envs
 /python/__pycache__
-/python/schema_build
+/python/schemabuild
