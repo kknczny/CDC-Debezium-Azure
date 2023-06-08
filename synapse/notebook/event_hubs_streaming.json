@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "2ae6e779-5a10-43c7-90bf-a0e48c54fb04"
+				"spark.autotune.trackingId": "3c6ff1ef-69fa-4ca8-a2b4-3516b8ed635c"
 			}
 		},
 		"metadata": {
@@ -53,7 +53,7 @@
 				"metadata": {
 					"jupyter": {
 						"source_hidden": false,
-						"outputs_hidden": false
+						"outputs_hidden": true
 					},
 					"nteract": {
 						"transient": {
@@ -62,12 +62,13 @@
 					}
 				},
 				"source": [
-					"import json\r\n",
-					"from pyspark.sql.functions import *\r\n",
-					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType, TimestampType\r\n",
-					"import schema_build"
+					"# check if custom module is available\r\n",
+					"import pkg_resources\r\n",
+					"\r\n",
+					"for d in pkg_resources.working_set:\r\n",
+					"    print(d)"
 				],
-				"execution_count": 1
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -83,9 +84,12 @@
 					}
 				},
 				"source": [
-					"import pkg_resources"
+					"import json\r\n",
+					"from pyspark.sql.functions import *\r\n",
+					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType, TimestampType\r\n",
+					"import schemabuild"
 				],
-				"execution_count": null
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
