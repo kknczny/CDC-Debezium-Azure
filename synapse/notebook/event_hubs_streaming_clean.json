@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "c5b3ed61-419b-467f-82ee-493a3f66c3f6"
+				"spark.autotune.trackingId": "a85c11cf-78db-4ee4-a62d-49ccfa341e2d"
 			}
 		},
 		"metadata": {
@@ -75,7 +75,7 @@
 					"keyVaultName = \"cdc-streaming-kv2\"\r\n",
 					"secretName = \"eh-connstring\"\r\n",
 					"connectionString = mssparkutils.credentials.getSecret(keyVaultName, secretName)\r\n",
-					"EH_name = \"wwi-04\"\r\n",
+					"EH_name = \"wwi-00\"\r\n",
 					"connectionStringEntity = connectionString + \";EntityPath=\" + EH_name\r\n",
 					"consumer_group = \"$Default\"\r\n",
 					"\r\n",
@@ -99,7 +99,7 @@
 					"\r\n",
 					"ehConf[\"eventhubs.connectionString\"] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionStringEntity)"
 				],
-				"execution_count": null
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -173,7 +173,7 @@
 					"                (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
 					"        )"
 				],
-				"execution_count": null
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -197,7 +197,7 @@
 					"\r\n",
 					"# df_parsed = df_raw.withColumn(\"parsed\", col(\"body\").cast(\"string\"))"
 				],
-				"execution_count": null
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -218,7 +218,7 @@
 					"print(\"-----\")\r\n",
 					"df_raw.printSchema()"
 				],
-				"execution_count": null
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -255,11 +255,95 @@
 					}
 				},
 				"source": [
+					"def deserialize_cdc_msg(df: DataFrame, cdc_schema: StructType):\r\n",
+					"        df_parsed = df.withColumn(\"parsed\", col(\"body\").cast(\"string\"))\r\n",
+					"        \r\n",
+					"        df_payload = df_parsed.select(\"parsed.payload\")\r\n",
+					"\r\n",
+					"        return (\r\n",
+					"            df_payload.select(spark_avro_deserializer(col('payload')).alias('value'))\r\n",
+					"                .withColumn('value', from_json('value', cdc_schema))\r\n",
+					"                .select(\r\n",
+					"                'value.op',\r\n",
+					"                'value.after.*',\r\n",
+					"                (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
+					"        )"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_parsed = df_raw.withColumn(\"parsed\", col(\"body\").cast(\"string\"))"
+				],
+				"execution_count": 17
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_payload = df_parsed.select(from_json(\"parsed.payload\"))"
+				],
+				"execution_count": 19
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_payload.printSchema()"
+				],
+				"execution_count": 16
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"cdc_schema = get_cdc_schema('orders')\r\n",
 					"\r\n",
 					"df_deserialized = deserialize_cdc_msg(df_raw, cdc_schema)"
 				],
-				"execution_count": null
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
