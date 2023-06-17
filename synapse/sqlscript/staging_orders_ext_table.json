@@ -1,0 +1,17 @@
+{
+	"name": "staging_orders_ext_table",
+	"properties": {
+		"content": {
+			"query": "USE [cdc-synapse]\n\n\nSELECT *\nFROM OPENROWSET(BULK '/output/year=*/month=*/day=*/hour=*/*.parquet',\n                DATA_SOURCE='ORDERS_LANDING', --> Root URL is in LOCATION of DATA SOURCE\n                FORMAT = 'PARQUET') AS [file]\nWHERE OrderID IS NOT NULL\nORDER BY ts DESC",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "cdc-synapse",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
