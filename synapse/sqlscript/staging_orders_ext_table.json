@@ -2,7 +2,7 @@
 	"name": "staging_orders_ext_table",
 	"properties": {
 		"content": {
-			"query": "USE [cdc-synapse]\n\n\nSELECT *\nFROM OPENROWSET(BULK '/output/year=*/month=*/day=*/hour=*/*.parquet',\n                DATA_SOURCE='ORDERS_LANDING', --> Root URL is in LOCATION of DATA SOURCE\n                FORMAT = 'PARQUET') AS [file]\nWHERE OrderID IS NOT NULL\nORDER BY ts DESC",
+			"query": "USE [cdc-synapse]\nGO\n\nIF EXISTS(SELECT TOP 1 * FROM INFORMATION_SCHEMA.TABLES WHERE [TABLE_SCHEMA] = 'Staging' AND [TABLE_NAME] = 'Orders') DROP EXTERNAL TABLE [Staging].[Orders]  \nGO\n\nCREATE EXTERNAL TABLE [Staging].[Orders]\nWITH\n(\n\tLOCATION = '/orders',\n\tDATA_SOURCE = [STAGING],\n\tFILE_FORMAT = [ParquetFF]\n)\nAS\nSELECT *\nFROM OPENROWSET(BULK '/output/year=*/month=*/day=*/hour=*/*.parquet',\n                DATA_SOURCE='ORDERS_LANDING',\n                FORMAT = 'PARQUET') AS [files]\nWHERE OrderID IS NOT NULL",
 			"metadata": {
 				"language": "sql"
 			},

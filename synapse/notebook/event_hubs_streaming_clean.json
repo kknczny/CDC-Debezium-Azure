@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "6e454286-ed49-487b-b79b-06d32f1e9378"
+				"spark.autotune.trackingId": "d8d829ad-0480-4b32-a3c3-baee2105137a"
 			}
 		},
 		"metadata": {
@@ -202,7 +202,7 @@
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
-						"source_hidden": true,
+						"source_hidden": false,
 						"outputs_hidden": true
 					},
 					"nteract": {
@@ -218,25 +218,6 @@
 					"# df_raw.printSchema()"
 				],
 				"execution_count": 84
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# df_parsed = df_raw.withColumn(\"parsed\", col(\"body\").cast(\"string\"))\r\n",
-					"# df_parsed.printSchema()"
-				],
-				"execution_count": 85
 			},
 			{
 				"cell_type": "code",
@@ -326,100 +307,6 @@
 					}
 				},
 				"source": [
-					"# # test 1\r\n",
-					"# df_payload = df_parsed.select(from_json(col(\"parsed\"), root_schema).alias(\"parsed_json\")).select(\"parsed_json.payload\")"
-				],
-				"execution_count": 87
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": true
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# # test 2\r\n",
-					"# df_payload.printSchema()"
-				],
-				"execution_count": 88
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# def deserialize_cdc_msg(df: DataFrame, cdc_schema: StructType):\r\n",
-					"#         df_parsed = df.withColumn(\"parsed\", col(\"body\").cast(\"string\"))\r\n",
-					"        \r\n",
-					"#         df_payload = df_parsed.select(\"parsed.payload\")\r\n",
-					"\r\n",
-					"#         return (\r\n",
-					"#             df_payload.select(spark_avro_deserializer(col('payload')).alias('value'))\r\n",
-					"#                 .withColumn('value', from_json('value', cdc_schema))\r\n",
-					"#                 .select(\r\n",
-					"#                 'value.op',\r\n",
-					"#                 'value.after.*',\r\n",
-					"#                 (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
-					"#         )"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# # test 4\r\n",
-					"\r\n",
-					"# cdc_schema = get_cdc_schema('orders')\r\n",
-					"\r\n",
-					"# df_deserialized = df_payload.withColumn('value', from_json(to_json('payload'), cdc_schema))    \\\r\n",
-					"#             .select(    \\\r\n",
-					"#             'value.op', \\\r\n",
-					"#             'value.after.*',    \\\r\n",
-					"#             (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))"
-				],
-				"execution_count": 89
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
 					"cdc_schema = get_cdc_schema('orders')\r\n",
 					"\r\n",
 					"df_deserialized = deserialize_cdc_msg(df_raw, cdc_schema)"
@@ -440,74 +327,9 @@
 					}
 				},
 				"source": [
-					"df_deserialized.printSchema()"
+					"# df_deserialized.printSchema()"
 				],
 				"execution_count": 106
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# # test 5\r\n",
-					"# query_test = df_deserialized  \\\r\n",
-					"#     .writeStream    \\\r\n",
-					"#     .format(\"json\") \\\r\n",
-					"#     .outputMode(\"append\")   \\\r\n",
-					"#     .option(\"checkpointLocation\", checkpoint_loc)   \\\r\n",
-					"#     .option(\"path\", output_loc)    \\\r\n",
-					"#     .start()"
-				],
-				"execution_count": 96
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# query_test.stop()"
-				],
-				"execution_count": 73
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# # Test 6 - Check the status of query\r\n",
-					"\r\n",
-					"# print(query_test.isActive)\r\n",
-					"# print(\"-----\")\r\n",
-					"# print(query_test.exception())"
-				],
-				"execution_count": 101
 			},
 			{
 				"cell_type": "code",
@@ -574,11 +396,11 @@
 					}
 				},
 				"source": [
-					"# Check the status of query\r\n",
+					"# # Check the status of query\r\n",
 					"\r\n",
-					"print(CDC_query.isActive)\r\n",
-					"print(\"-----\")\r\n",
-					"print(CDC_query.exception())"
+					"# print(CDC_query.isActive)\r\n",
+					"# print(\"-----\")\r\n",
+					"# print(CDC_query.exception())"
 				],
 				"execution_count": 109
 			}
