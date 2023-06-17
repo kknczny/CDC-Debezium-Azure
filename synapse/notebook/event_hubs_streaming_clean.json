@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "486e6ceb-a5d8-4ee8-bd7c-d2ae9721a5d8"
+				"spark.autotune.trackingId": "c5b3ed61-419b-467f-82ee-493a3f66c3f6"
 			}
 		},
 		"metadata": {
@@ -53,28 +53,6 @@
 				"metadata": {
 					"jupyter": {
 						"source_hidden": false,
-						"outputs_hidden": true
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# check if custom module is available\r\n",
-					"import pkg_resources\r\n",
-					"\r\n",
-					"for d in pkg_resources.working_set:\r\n",
-					"    print(d)"
-				],
-				"execution_count": 1
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
 						"outputs_hidden": false
 					},
 					"nteract": {
@@ -87,9 +65,9 @@
 					"import json\r\n",
 					"from pyspark.sql.functions import *\r\n",
 					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType, TimestampType\r\n",
-					"from schemabuild import spark_avro_deserializer"
+					"# from schemabuild.helpers import spark_avro_deserializer"
 				],
-				"execution_count": 3
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -121,73 +99,7 @@
 					"\r\n",
 					"ehConf[\"eventhubs.connectionString\"] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionStringEntity)"
 				],
-				"execution_count": 4
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"df_raw = spark \\\r\n",
-					"  .readStream \\\r\n",
-					"  .format(\"eventhubs\") \\\r\n",
-					"  .options(**ehConf) \\\r\n",
-					"  .load()\r\n",
-					"\r\n",
-					"df_parsed = df_raw.withColumn(\"parsed\", col(\"body\").cast(\"string\"))"
-				],
-				"execution_count": 5
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Check if is streaming\r\n",
-					"print(df_raw.isStreaming)\r\n",
-					"print(\"-----\")\r\n",
-					"df_raw.printSchema()"
-				],
-				"execution_count": 6
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# Check if is streaming\r\n",
-					"print(df_parsed.isStreaming)\r\n",
-					"print(\"-----\")\r\n",
-					"df_parsed.printSchema()"
-				],
-				"execution_count": 7
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -235,7 +147,97 @@
 					"        .add(\"before\", obj_schema)\r\n",
 					"        .add(\"after\", obj_schema)\r\n",
 					"    )\r\n",
-					""
+					"\r\n",
+					"def deserialize_cdc_msg(df: DataFrame, cdc_schema: StructType):\r\n",
+					"        df_parsed = df.withColumn(\"parsed\", col(\"body\").cast(\"string\"))\r\n",
+					"        \r\n",
+					"        df_payload = df_parsed.select(\"parsed.payload\")\r\n",
+					"\r\n",
+					"        return (\r\n",
+					"            df_payload.select(spark_avro_deserializer(col('payload')).alias('value'))\r\n",
+					"                .withColumn('value', from_json('value', cdc_schema))\r\n",
+					"                .select(\r\n",
+					"                'value.op',\r\n",
+					"                'value.after.*',\r\n",
+					"                (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
+					"        )\r\n",
+					"        \r\n",
+					"def deserialize_cdc_msg_json(df: DataFrame, cdc_schema: StructType):\r\n",
+					"        df_payload = df.select('payload')\r\n",
+					"\r\n",
+					"        return (\r\n",
+					"            df_payload.withColumn('value', from_json(to_json('payload'), cdc_schema))\r\n",
+					"                .select(\r\n",
+					"                'value.op',\r\n",
+					"                'value.after.*',\r\n",
+					"                (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
+					"        )"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_raw = spark \\\r\n",
+					"  .readStream \\\r\n",
+					"  .format(\"eventhubs\") \\\r\n",
+					"  .options(**ehConf) \\\r\n",
+					"  .load()\r\n",
+					"\r\n",
+					"# df_parsed = df_raw.withColumn(\"parsed\", col(\"body\").cast(\"string\"))"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Check if is streaming\r\n",
+					"print(df_raw.isStreaming)\r\n",
+					"print(\"-----\")\r\n",
+					"df_raw.printSchema()"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# # Check if is streaming\r\n",
+					"# print(df_parsed.isStreaming)\r\n",
+					"# print(\"-----\")\r\n",
+					"# df_parsed.printSchema()"
 				],
 				"execution_count": null
 			},
@@ -255,12 +257,7 @@
 				"source": [
 					"cdc_schema = get_cdc_schema('orders')\r\n",
 					"\r\n",
-					"df_deserialized = df_parsed.select(spark_avro_deserializer(col('parsed')).alias('value')) \\\r\n",
-					"    .withColumn('value', from_json('value', cdc_schema))    \\\r\n",
-					"    .select(    \\\r\n",
-					"    'value.op', \\\r\n",
-					"    'value.after.*',  \\\r\n",
-					"    (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts')) "
+					"df_deserialized = deserialize_cdc_msg(df_raw, cdc_schema)"
 				],
 				"execution_count": null
 			},
