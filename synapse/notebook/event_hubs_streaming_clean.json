@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "d8d829ad-0480-4b32-a3c3-baee2105137a"
+				"spark.autotune.trackingId": "075098f6-ac28-4efa-a2ee-704ce20fa836"
 			}
 		},
 		"metadata": {
@@ -64,10 +64,9 @@
 				"source": [
 					"import json\r\n",
 					"from pyspark.sql.functions import *\r\n",
-					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType, TimestampType\r\n",
-					"# from schemabuild.helpers import spark_avro_deserializer"
+					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType, TimestampType, DecimalType"
 				],
-				"execution_count": 80
+				"execution_count": 112
 			},
 			{
 				"cell_type": "code",
@@ -99,7 +98,7 @@
 					"\r\n",
 					"ehConf[\"eventhubs.connectionString\"] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionStringEntity)"
 				],
-				"execution_count": 81
+				"execution_count": 113
 			},
 			{
 				"cell_type": "code",
@@ -115,6 +114,8 @@
 					}
 				},
 				"source": [
+					"#to be moved to schemabuild module\r\n",
+					"\r\n",
 					"OBJ_SCHEMA_MAP = {\r\n",
 					"    'orders': (\r\n",
 					"        StructType()    \\\r\n",
@@ -133,7 +134,36 @@
 					"        .add(\"InternalComments\", StringType()) \\\r\n",
 					"        .add(\"PickingCompletedWhen\", LongType())   \\\r\n",
 					"        .add(\"LastEditedBy\", IntegerType())    \\\r\n",
-					"        .add(\"LastEditedWhen\", LongType())),\r\n",
+					"        .add(\"LastEditedWhen\", LongType())\r\n",
+					"        ),\r\n",
+					"    'stock': (\r\n",
+					"        StructType()    \\\r\n",
+					"        .add(\"StockItemID\", IntegerType()) \\\r\n",
+					"        .add(\"StockItemName\", StringType()) \\\r\n",
+					"        .add(\"SupplierID\", IntegerType())  \\\r\n",
+					"        .add(\"ColorID\", IntegerType()) \\\r\n",
+					"        .add(\"UnitPackageID\", IntegerType())    \\\r\n",
+					"        .add(\"OuterPackageID\", IntegerType()) \\\r\n",
+					"        .add(\"Brand\", StringType()) \\\r\n",
+					"        .add(\"Size\", StringType()) \\\r\n",
+					"        .add(\"LeadTimeDays\", IntegerType())    \\\r\n",
+					"        .add(\"QuantityPerOuter\", IntegerType())   \\\r\n",
+					"        .add(\"IsChillerStock\", BooleanType())    \\\r\n",
+					"        .add(\"Barcode\", StringType())  \\\r\n",
+					"        .add(\"TaxRate\", DecimalType())    \\\r\n",
+					"        .add(\"UnitPrice\", DecimalType())   \\\r\n",
+					"        .add(\"RecommendedRetailPrice\", DecimalType()) \\\r\n",
+					"        .add(\"TypicalWeightPerUnit\", FloatType())   \\\r\n",
+					"        .add(\"MarketingComments\", StringType())    \\\r\n",
+					"        .add(\"InternalComments\", StringType())    \\\r\n",
+					"        .add(\"Photo\", StringType())    \\\r\n",
+					"        .add(\"CustomFields\", StringType()) \\\r\n",
+					"        .add(\"Tags\", StringType()) \\\r\n",
+					"        .add(\"SearchDetails\", StringType()) \\\r\n",
+					"        .add(\"LastEditedBy\", IntegerType())    \\\r\n",
+					"        .add(\"ValidFrom\", IntegerType())    \\\r\n",
+					"        .add(\"ValidTo\", IntegerType())\r\n",
+					"    ),\r\n",
 					"}\r\n",
 					"    \r\n",
 					"def get_cdc_schema(obj_name: str):\r\n",
@@ -172,7 +202,72 @@
 					"                (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
 					"        )"
 				],
-				"execution_count": 104
+				"execution_count": 169
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"INNER_SCHEMA_MAP = {\r\n",
+					"    'orders': [\r\n",
+					"        StructField(\"OrderID\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"CustomerID\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"SalespersonPersonID\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"PickedByPersonID\", IntegerType(), nullable=True),\r\n",
+					"        StructField(\"ContactPersonID\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"BackorderOrderID\", IntegerType(), nullable=True),\r\n",
+					"        StructField(\"OrderDate\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"ExpectedDeliveryDate\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"CustomerPurchaseOrderNumber\", StringType(), nullable=True),\r\n",
+					"        StructField(\"IsUndersupplyBackordered\", BooleanType(), nullable=False),\r\n",
+					"        StructField(\"Comments\", StringType(), nullable=True),\r\n",
+					"        StructField(\"DeliveryInstructions\", StringType(), nullable=True),\r\n",
+					"        StructField(\"InternalComments\", StringType(), nullable=True),\r\n",
+					"        StructField(\"PickingCompletedWhen\", LongType(), nullable=True),\r\n",
+					"        StructField(\"LastEditedBy\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"LastEditedWhen\", LongType(), nullable=False)\r\n",
+					"    ],\r\n",
+					"    'stock': [\r\n",
+					"        StructField(\"StockItemID\", IntegerType()),\r\n",
+					"        StructField(\"StockItemName\", StringType()),\r\n",
+					"        StructField(\"SupplierID\", IntegerType()),\r\n",
+					"        StructField(\"ColorID\", IntegerType()),\r\n",
+					"        StructField(\"UnitPackageID\", IntegerType()),\r\n",
+					"        StructField(\"OuterPackageID\", IntegerType()),\r\n",
+					"        StructField(\"Brand\", StringType()),\r\n",
+					"        StructField(\"Size\", StringType()),\r\n",
+					"        StructField(\"LeadTimeDays\", IntegerType()),\r\n",
+					"        StructField(\"QuantityPerOuter\", IntegerType()),\r\n",
+					"        StructField(\"IsChillerStock\", BooleanType()),\r\n",
+					"        StructField(\"Barcode\", StringType()),\r\n",
+					"        StructField(\"TaxRate\", DecimalType()),\r\n",
+					"        StructField(\"UnitPrice\", DecimalType()),\r\n",
+					"        StructField(\"RecommendedRetailPrice\", DecimalType()),\r\n",
+					"        StructField(\"TypicalWeightPerUnit\", FloatType()),\r\n",
+					"        StructField(\"MarketingComments\", StringType()),\r\n",
+					"        StructField(\"InternalComments\", StringType()),\r\n",
+					"        StructField(\"Photo\", StringType()),\r\n",
+					"        StructField(\"CustomFields\", StringType()),\r\n",
+					"        StructField(\"Tags\", StringType()),\r\n",
+					"        StructField(\"SearchDetails\", StringType()),\r\n",
+					"        StructField(\"LastEditedBy\", IntegerType()),\r\n",
+					"        StructField(\"ValidFrom\", IntegerType()),\r\n",
+					"        StructField(\"ValidTo\", IntegerType())\r\n",
+					"    ],\r\n",
+					"}\r\n",
+					"    "
+				],
+				"execution_count": 170
 			},
 			{
 				"cell_type": "code",
@@ -196,7 +291,7 @@
 					"\r\n",
 					"# df_parsed = df_raw.withColumn(\"parsed\", col(\"body\").cast(\"string\"))"
 				],
-				"execution_count": 83
+				"execution_count": 171
 			},
 			{
 				"cell_type": "code",
@@ -217,7 +312,7 @@
 					"# print(\"-----\")\r\n",
 					"# df_raw.printSchema()"
 				],
-				"execution_count": 84
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -233,28 +328,27 @@
 					}
 				},
 				"source": [
-					"# from pyspark.sql.types import StructType, StructField, IntegerType, StringType, BooleanType, LongType\r\n",
+					"object_schema = 'orders'\r\n",
 					"\r\n",
-					"# Define the schema for the inner struct fields\r\n",
-					"inner_struct_fields = [\r\n",
-					"    StructField(\"OrderID\", IntegerType(), nullable=False),\r\n",
-					"    StructField(\"CustomerID\", IntegerType(), nullable=False),\r\n",
-					"    StructField(\"SalespersonPersonID\", IntegerType(), nullable=False),\r\n",
-					"    StructField(\"PickedByPersonID\", IntegerType(), nullable=True),\r\n",
-					"    StructField(\"ContactPersonID\", IntegerType(), nullable=False),\r\n",
-					"    StructField(\"BackorderOrderID\", IntegerType(), nullable=True),\r\n",
-					"    StructField(\"OrderDate\", IntegerType(), nullable=False),\r\n",
-					"    StructField(\"ExpectedDeliveryDate\", IntegerType(), nullable=False),\r\n",
-					"    StructField(\"CustomerPurchaseOrderNumber\", StringType(), nullable=True),\r\n",
-					"    StructField(\"IsUndersupplyBackordered\", BooleanType(), nullable=False),\r\n",
-					"    StructField(\"Comments\", StringType(), nullable=True),\r\n",
-					"    StructField(\"DeliveryInstructions\", StringType(), nullable=True),\r\n",
-					"    StructField(\"InternalComments\", StringType(), nullable=True),\r\n",
-					"    StructField(\"PickingCompletedWhen\", LongType(), nullable=True),\r\n",
-					"    StructField(\"LastEditedBy\", IntegerType(), nullable=False),\r\n",
-					"    StructField(\"LastEditedWhen\", LongType(), nullable=False)\r\n",
-					"]\r\n",
-					"\r\n",
+					"cdc_schema = get_cdc_schema(object_schema)\r\n",
+					"inner_struct_fields = INNER_SCHEMA_MAP[object_schema]"
+				],
+				"execution_count": 172
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
 					"# Define the schema for the outer struct fields\r\n",
 					"outer_struct_fields = [\r\n",
 					"    StructField(\"before\", StructType(inner_struct_fields), nullable=True),\r\n",
@@ -291,7 +385,7 @@
 					"    StructField(\"payload\", StructType(outer_struct_fields), nullable=True)\r\n",
 					"])"
 				],
-				"execution_count": 86
+				"execution_count": 173
 			},
 			{
 				"cell_type": "code",
@@ -307,11 +401,9 @@
 					}
 				},
 				"source": [
-					"cdc_schema = get_cdc_schema('orders')\r\n",
-					"\r\n",
 					"df_deserialized = deserialize_cdc_msg(df_raw, cdc_schema)"
 				],
-				"execution_count": 105
+				"execution_count": 175
 			},
 			{
 				"cell_type": "code",
@@ -327,9 +419,27 @@
 					}
 				},
 				"source": [
-					"# df_deserialized.printSchema()"
+					"df_deserialized.printSchema()"
 				],
-				"execution_count": 106
+				"execution_count": 176
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"CDC_query.stop()"
+				],
+				"execution_count": 177
 			},
 			{
 				"cell_type": "code",
@@ -362,7 +472,7 @@
 					"    .option(\"path\", output_loc)    \\\r\n",
 					"    .start()"
 				],
-				"execution_count": null
+				"execution_count": 178
 			},
 			{
 				"cell_type": "code",
@@ -378,31 +488,13 @@
 					}
 				},
 				"source": [
-					"# CDC_query.stop()"
-				],
-				"execution_count": null
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"# # Check the status of query\r\n",
+					"# Check the status of query\r\n",
 					"\r\n",
-					"# print(CDC_query.isActive)\r\n",
-					"# print(\"-----\")\r\n",
-					"# print(CDC_query.exception())"
+					"print(CDC_query.isActive)\r\n",
+					"print(\"-----\")\r\n",
+					"print(CDC_query.exception())"
 				],
-				"execution_count": 109
+				"execution_count": 179
 			}
 		]
 	}
