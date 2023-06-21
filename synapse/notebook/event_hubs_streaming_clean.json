@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "21be7787-7982-43a0-84aa-036cc63f2f6d"
+				"spark.autotune.trackingId": "d4e01524-a0d8-4c20-b057-47021eb397d2"
 			}
 		},
 		"metadata": {
@@ -191,7 +191,7 @@
 					"                    .otherwise(col('value.after')))\r\n",
 					"            .select(    \\\r\n",
 					"            'value.op', \\\r\n",
-					"            'value.after.*',    \\\r\n",
+					"            'result.*',    \\\r\n",
 					"            (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
 					"        )\r\n",
 					"       \r\n",
@@ -561,7 +561,7 @@
 					"print(\"-----\")\r\n",
 					"print(CDC_query.exception())"
 				],
-				"execution_count": 100
+				"execution_count": 101
 			},
 			{
 				"cell_type": "code",
