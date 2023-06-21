@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "075098f6-ac28-4efa-a2ee-704ce20fa836"
+				"spark.autotune.trackingId": "d0657b63-86b1-46d9-b690-dd7a63d67c14"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"from pyspark.sql.functions import *\r\n",
 					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType, TimestampType, DecimalType"
 				],
-				"execution_count": 112
+				"execution_count": 88
 			},
 			{
 				"cell_type": "code",
@@ -74,12 +74,14 @@
 					"keyVaultName = \"cdc-streaming-kv2\"\r\n",
 					"secretName = \"eh-connstring\"\r\n",
 					"connectionString = mssparkutils.credentials.getSecret(keyVaultName, secretName)\r\n",
-					"EH_name = \"wwi-00\"\r\n",
+					"EH_name = \"wwi-01\"\r\n",
 					"connectionStringEntity = connectionString + \";EntityPath=\" + EH_name\r\n",
 					"consumer_group = \"$Default\"\r\n",
 					"\r\n",
-					"checkpoint_loc = \"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/orders/checkpoint/\"\r\n",
-					"output_loc = \"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/orders/output/\"\r\n",
+					"object_schema = 'stock'\r\n",
+					"\r\n",
+					"checkpoint_loc = f\"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/{object_schema}/checkpoint/\"\r\n",
+					"output_loc = f\"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/{object_schema}/output/\"\r\n",
 					"\r\n",
 					"# Create the starting position Dictionary\r\n",
 					"startingEventPosition = {\r\n",
@@ -98,7 +100,7 @@
 					"\r\n",
 					"ehConf[\"eventhubs.connectionString\"] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionStringEntity)"
 				],
-				"execution_count": 113
+				"execution_count": 89
 			},
 			{
 				"cell_type": "code",
@@ -153,7 +155,7 @@
 					"        .add(\"TaxRate\", DecimalType())    \\\r\n",
 					"        .add(\"UnitPrice\", DecimalType())   \\\r\n",
 					"        .add(\"RecommendedRetailPrice\", DecimalType()) \\\r\n",
-					"        .add(\"TypicalWeightPerUnit\", FloatType())   \\\r\n",
+					"        .add(\"TypicalWeightPerUnit\", DecimalType())   \\\r\n",
 					"        .add(\"MarketingComments\", StringType())    \\\r\n",
 					"        .add(\"InternalComments\", StringType())    \\\r\n",
 					"        .add(\"Photo\", StringType())    \\\r\n",
@@ -161,8 +163,8 @@
 					"        .add(\"Tags\", StringType()) \\\r\n",
 					"        .add(\"SearchDetails\", StringType()) \\\r\n",
 					"        .add(\"LastEditedBy\", IntegerType())    \\\r\n",
-					"        .add(\"ValidFrom\", IntegerType())    \\\r\n",
-					"        .add(\"ValidTo\", IntegerType())\r\n",
+					"        .add(\"ValidFrom\", LongType())    \\\r\n",
+					"        .add(\"ValidTo\", LongType())\r\n",
 					"    ),\r\n",
 					"}\r\n",
 					"    \r\n",
@@ -185,24 +187,27 @@
 					"                        .alias(\"parsed_json\")).select(\"parsed_json.payload\")\r\n",
 					"        return (\r\n",
 					"            df_payload.withColumn('value', from_json(to_json('payload'), cdc_schema))    \\\r\n",
+					"                .withColumn('result', when(col('value.op') == \"d\", col('value.before'))   \\\r\n",
+					"                    .otherwise(col('value.after')))\r\n",
 					"            .select(    \\\r\n",
 					"            'value.op', \\\r\n",
-					"            'value.after.*',    \\\r\n",
+					"            'result.*',    \\\r\n",
 					"            (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
 					"        )\r\n",
-					"        \r\n",
+					"       \r\n",
 					"def deserialize_cdc_msg_json(df: DataFrame, cdc_schema: StructType):\r\n",
-					"        df_payload = df.select('payload')\r\n",
-					"\r\n",
+					"        df = df.select('payload')\r\n",
 					"        return (\r\n",
-					"            df_payload.withColumn('value', from_json(to_json('payload'), cdc_schema))\r\n",
-					"                .select(\r\n",
-					"                'value.op',\r\n",
-					"                'value.after.*',\r\n",
+					"            df.withColumn('value', from_json(to_json('payload'), cdc_schema))    \\\r\n",
+					"                .withColumn('result', when(col('value.op') == \"d\", col('value.before'))   \\\r\n",
+					"                    .otherwise(col('value.after')))\r\n",
+					"                .select(    \\\r\n",
+					"                'value.op', \\\r\n",
+					"                'result.*',    \\\r\n",
 					"                (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
 					"        )"
 				],
-				"execution_count": 169
+				"execution_count": 102
 			},
 			{
 				"cell_type": "code",
@@ -238,36 +243,36 @@
 					"        StructField(\"LastEditedWhen\", LongType(), nullable=False)\r\n",
 					"    ],\r\n",
 					"    'stock': [\r\n",
-					"        StructField(\"StockItemID\", IntegerType()),\r\n",
-					"        StructField(\"StockItemName\", StringType()),\r\n",
-					"        StructField(\"SupplierID\", IntegerType()),\r\n",
-					"        StructField(\"ColorID\", IntegerType()),\r\n",
-					"        StructField(\"UnitPackageID\", IntegerType()),\r\n",
-					"        StructField(\"OuterPackageID\", IntegerType()),\r\n",
-					"        StructField(\"Brand\", StringType()),\r\n",
-					"        StructField(\"Size\", StringType()),\r\n",
-					"        StructField(\"LeadTimeDays\", IntegerType()),\r\n",
-					"        StructField(\"QuantityPerOuter\", IntegerType()),\r\n",
-					"        StructField(\"IsChillerStock\", BooleanType()),\r\n",
-					"        StructField(\"Barcode\", StringType()),\r\n",
-					"        StructField(\"TaxRate\", DecimalType()),\r\n",
-					"        StructField(\"UnitPrice\", DecimalType()),\r\n",
-					"        StructField(\"RecommendedRetailPrice\", DecimalType()),\r\n",
-					"        StructField(\"TypicalWeightPerUnit\", FloatType()),\r\n",
-					"        StructField(\"MarketingComments\", StringType()),\r\n",
-					"        StructField(\"InternalComments\", StringType()),\r\n",
-					"        StructField(\"Photo\", StringType()),\r\n",
-					"        StructField(\"CustomFields\", StringType()),\r\n",
-					"        StructField(\"Tags\", StringType()),\r\n",
-					"        StructField(\"SearchDetails\", StringType()),\r\n",
-					"        StructField(\"LastEditedBy\", IntegerType()),\r\n",
-					"        StructField(\"ValidFrom\", IntegerType()),\r\n",
-					"        StructField(\"ValidTo\", IntegerType())\r\n",
+					"        StructField(\"StockItemID\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"StockItemName\", StringType(), nullable=False),\r\n",
+					"        StructField(\"SupplierID\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"ColorID\", IntegerType(), nullable=True),\r\n",
+					"        StructField(\"UnitPackageID\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"OuterPackageID\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"Brand\", StringType(), nullable=True),\r\n",
+					"        StructField(\"Size\", StringType(), nullable=True),\r\n",
+					"        StructField(\"LeadTimeDays\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"QuantityPerOuter\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"IsChillerStock\", BooleanType(), nullable=False),\r\n",
+					"        StructField(\"Barcode\", StringType(), nullable=True),\r\n",
+					"        StructField(\"TaxRate\", DecimalType(), nullable=False),\r\n",
+					"        StructField(\"UnitPrice\", DecimalType(), nullable=False),\r\n",
+					"        StructField(\"RecommendedRetailPrice\", DecimalType(), nullable=True),\r\n",
+					"        StructField(\"TypicalWeightPerUnit\", DecimalType(), nullable=False),\r\n",
+					"        StructField(\"MarketingComments\", StringType(), nullable=True),\r\n",
+					"        StructField(\"InternalComments\", StringType(), nullable=True),\r\n",
+					"        StructField(\"Photo\", StringType(), nullable=True),\r\n",
+					"        StructField(\"CustomFields\", StringType(), nullable=True),\r\n",
+					"        StructField(\"Tags\", StringType(), nullable=True),\r\n",
+					"        StructField(\"SearchDetails\", StringType(), nullable=False),\r\n",
+					"        StructField(\"LastEditedBy\", IntegerType(), nullable=False),\r\n",
+					"        StructField(\"ValidFrom\", LongType(), nullable=False),\r\n",
+					"        StructField(\"ValidTo\", LongType(), nullable=False)\r\n",
 					"    ],\r\n",
 					"}\r\n",
 					"    "
 				],
-				"execution_count": 170
+				"execution_count": 73
 			},
 			{
 				"cell_type": "code",
@@ -291,7 +296,7 @@
 					"\r\n",
 					"# df_parsed = df_raw.withColumn(\"parsed\", col(\"body\").cast(\"string\"))"
 				],
-				"execution_count": 171
+				"execution_count": 91
 			},
 			{
 				"cell_type": "code",
@@ -312,7 +317,7 @@
 					"# print(\"-----\")\r\n",
 					"# df_raw.printSchema()"
 				],
-				"execution_count": null
+				"execution_count": 75
 			},
 			{
 				"cell_type": "code",
@@ -328,12 +333,10 @@
 					}
 				},
 				"source": [
-					"object_schema = 'orders'\r\n",
-					"\r\n",
 					"cdc_schema = get_cdc_schema(object_schema)\r\n",
 					"inner_struct_fields = INNER_SCHEMA_MAP[object_schema]"
 				],
-				"execution_count": 172
+				"execution_count": 92
 			},
 			{
 				"cell_type": "code",
@@ -385,7 +388,7 @@
 					"    StructField(\"payload\", StructType(outer_struct_fields), nullable=True)\r\n",
 					"])"
 				],
-				"execution_count": 173
+				"execution_count": 93
 			},
 			{
 				"cell_type": "code",
@@ -403,14 +406,14 @@
 				"source": [
 					"df_deserialized = deserialize_cdc_msg(df_raw, cdc_schema)"
 				],
-				"execution_count": 175
+				"execution_count": 104
 			},
 			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
 						"source_hidden": false,
-						"outputs_hidden": true
+						"outputs_hidden": false
 					},
 					"nteract": {
 						"transient": {
@@ -421,7 +424,71 @@
 				"source": [
 					"df_deserialized.printSchema()"
 				],
-				"execution_count": 176
+				"execution_count": 105
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# query_test = df_deserialized  \\\r\n",
+					"# \t\t\t\t.writeStream    \\\r\n",
+					"# \t\t\t\t.format(\"json\") \\\r\n",
+					"# \t\t\t\t.outputMode(\"append\")   \\\r\n",
+					"# \t\t\t\t.option(\"checkpointLocation\", checkpoint_loc)   \\\r\n",
+					"# \t\t\t\t.option(\"path\", output_loc)    \\\r\n",
+					"# \t\t\t\t.start()"
+				],
+				"execution_count": 96
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# query_test.stop()"
+				],
+				"execution_count": 97
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# # Check the status of query\r\n",
+					"\r\n",
+					"# print(query_test.isActive)\r\n",
+					"# print(\"-----\")\r\n",
+					"# print(query_test.exception())"
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -439,7 +506,7 @@
 				"source": [
 					"CDC_query.stop()"
 				],
-				"execution_count": 177
+				"execution_count": 103
 			},
 			{
 				"cell_type": "code",
@@ -472,7 +539,7 @@
 					"    .option(\"path\", output_loc)    \\\r\n",
 					"    .start()"
 				],
-				"execution_count": 178
+				"execution_count": 106
 			},
 			{
 				"cell_type": "code",
@@ -494,7 +561,25 @@
 					"print(\"-----\")\r\n",
 					"print(CDC_query.exception())"
 				],
-				"execution_count": 179
+				"execution_count": 107
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			}
 		]
 	}

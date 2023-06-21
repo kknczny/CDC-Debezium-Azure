@@ -1,0 +1,436 @@
+{
+    "schema": {
+      "type": "struct",
+      "fields": [
+        {
+          "type": "struct",
+          "fields": [
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "StockItemID"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "StockItemName"
+            },
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "SupplierID"
+            },
+            {
+              "type": "int32",
+              "optional": true,
+              "field": "ColorID"
+            },
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "UnitPackageID"
+            },
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "OuterPackageID"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "Brand"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "Size"
+            },
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "LeadTimeDays"
+            },
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "QuantityPerOuter"
+            },
+            {
+              "type": "boolean",
+              "optional": false,
+              "field": "IsChillerStock"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "Barcode"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "TaxRate"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "UnitPrice"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "RecommendedRetailPrice"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "TypicalWeightPerUnit"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "MarketingComments"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "InternalComments"
+            },
+            {
+              "type": "bytes",
+              "optional": true,
+              "field": "Photo"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "CustomFields"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "Tags"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "SearchDetails"
+            },
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "LastEditedBy"
+            },
+            {
+              "type": "int64",
+              "optional": false,
+              "name": "io.debezium.time.NanoTimestamp",
+              "version": 1,
+              "field": "ValidFrom"
+            },
+            {
+              "type": "int64",
+              "optional": false,
+              "name": "io.debezium.time.NanoTimestamp",
+              "version": 1,
+              "field": "ValidTo"
+            }
+          ],
+          "optional": true,
+          "name": "wwi_00.Value",
+          "field": "before"
+        },
+        {
+          "type": "struct",
+          "fields": [
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "StockItemID"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "StockItemName"
+            },
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "SupplierID"
+            },
+            {
+              "type": "int32",
+              "optional": true,
+              "field": "ColorID"
+            },
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "UnitPackageID"
+            },
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "OuterPackageID"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "Brand"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "Size"
+            },
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "LeadTimeDays"
+            },
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "QuantityPerOuter"
+            },
+            {
+              "type": "boolean",
+              "optional": false,
+              "field": "IsChillerStock"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "Barcode"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "TaxRate"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "UnitPrice"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "RecommendedRetailPrice"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "TypicalWeightPerUnit"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "MarketingComments"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "InternalComments"
+            },
+            {
+              "type": "bytes",
+              "optional": true,
+              "field": "Photo"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "CustomFields"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "Tags"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "SearchDetails"
+            },
+            {
+              "type": "int32",
+              "optional": false,
+              "field": "LastEditedBy"
+            },
+            {
+              "type": "int64",
+              "optional": false,
+              "name": "io.debezium.time.NanoTimestamp",
+              "version": 1,
+              "field": "ValidFrom"
+            },
+            {
+              "type": "int64",
+              "optional": false,
+              "name": "io.debezium.time.NanoTimestamp",
+              "version": 1,
+              "field": "ValidTo"
+            }
+          ],
+          "optional": true,
+          "name": "wwi_00.Value",
+          "field": "after"
+        },
+        {
+          "type": "struct",
+          "fields": [
+            {
+              "type": "string",
+              "optional": false,
+              "field": "version"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "connector"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "name"
+            },
+            {
+              "type": "int64",
+              "optional": false,
+              "field": "ts_ms"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "name": "io.debezium.data.Enum",
+              "version": 1,
+              "parameters": {
+                "allowed": "true,last,false,incremental"
+              },
+              "default": "false",
+              "field": "snapshot"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "db"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "sequence"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "schema"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "table"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "change_lsn"
+            },
+            {
+              "type": "string",
+              "optional": true,
+              "field": "commit_lsn"
+            },
+            {
+              "type": "int64",
+              "optional": true,
+              "field": "event_serial_no"
+            }
+          ],
+          "optional": false,
+          "name": "io.debezium.connector.sqlserver.Source",
+          "field": "source"
+        },
+        {
+          "type": "string",
+          "optional": false,
+          "field": "op"
+        },
+        {
+          "type": "int64",
+          "optional": true,
+          "field": "ts_ms"
+        },
+        {
+          "type": "struct",
+          "fields": [
+            {
+              "type": "string",
+              "optional": false,
+              "field": "id"
+            },
+            {
+              "type": "int64",
+              "optional": false,
+              "field": "total_order"
+            },
+            {
+              "type": "int64",
+              "optional": false,
+              "field": "data_collection_order"
+            }
+          ],
+          "optional": true,
+          "field": "transaction"
+        }
+      ],
+      "optional": false,
+      "name": "wwi_00.Envelope"
+    },
+    "payload": {
+      "before": {
+        "StockItemID": 999,
+        "StockItemName": "Dummy Stock",
+        "SupplierID": 1,
+        "ColorID": null,
+        "UnitPackageID": 1,
+        "OuterPackageID": 6,
+        "Brand": null,
+        "Size": null,
+        "LeadTimeDays": 1,
+        "QuantityPerOuter": 1,
+        "IsChillerStock": false,
+        "Barcode": null,
+        "TaxRate": "0.000",
+        "UnitPrice": "0.00",
+        "RecommendedRetailPrice": "0.00",
+        "TypicalWeightPerUnit": "0.000",
+        "MarketingComments": null,
+        "InternalComments": null,
+        "Photo": null,
+        "CustomFields": "{}",
+        "Tags": null,
+        "SearchDetails": "",
+        "LastEditedBy": 1,
+        "ValidFrom": 1687257098905122500,
+        "ValidTo": -4852116231933722724
+      },
+      "after": null,
+      "source": {
+        "version": "1.9.7.Final",
+        "connector": "sqlserver",
+        "name": "localhost",
+        "ts_ms": 1687257113920,
+        "snapshot": "false",
+        "db": "WideWorldImporters",
+        "sequence": null,
+        "schema": "Warehouse",
+        "table": "StockItems",
+        "change_lsn": "00000086:00000bc8:000d",
+        "commit_lsn": "00000086:00000bc8:0010",
+        "event_serial_no": 1
+      },
+      "op": "d",
+      "ts_ms": 1687257116676,
+      "transaction": null
+    }
+  }
