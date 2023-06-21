@@ -59,4 +59,4 @@ def execute(num_reruns = 0, sleep_secs = 10, script = 'neworder'):
     sqlfile.close()
     
 if __name__ == "__main__":
-    execute(num_reruns=5, sleep_secs=10, script='modifystock')
+    execute(num_reruns=1, sleep_secs=0, script='modifystock')
