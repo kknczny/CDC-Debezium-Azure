@@ -14,7 +14,7 @@
 			"Provider": "ADLS",
 			"Location": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDClanding",
 			"Properties": {
-				"FormatType": "csv",
+				"FormatType": "parquet",
 				"LinkedServiceName": "asa-cdc-streaming-WorkspaceDefaultStorage"
 			}
 		}
