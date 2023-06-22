@@ -1,0 +1,17 @@
+{
+	"name": "lake_db_draft_table_create",
+	"properties": {
+		"content": {
+			"query": "USE CDCStaging\n\n\nCREATE TABLE [CDCstaging].[dbo].[StockItems_SCD2]\n(\n    -- [operation] NVARCHAR(1),\n    [StockItemID] INT,\n    [StockItemName] NVARCHAR(100),\n    [SupplierID] INT,\n    [ColorID] INT,\n    [UnitPackageID] INT,\n    [OuterPackageID] INT,\n    [Brand] NVARCHAR(50),\n    [Size] NVARCHAR(20),\n    [LeadTimeDays]  INT,\n    [QuantityPerOuter] INT,\n    [IsChillerStock] BIT,\n    [Barcode] NVARCHAR(50),\n    [TaxRate] DECIMAL(18,3),\n    [UnitPrice] DECIMAL(18,2),\n    [RecommendedRetailPrice] DECIMAL(18,2),\n    [TypicalWeightPerUnit] DECIMAL(18,3),\n    [MarketingComments] NVARCHAR(MAX),\n    [InternalComments] NVARCHAR(MAX),\n    [Photo] NVARCHAR(MAX),\n    [CustomFields] NVARCHAR(MAX),\n    [Tags] NVARCHAR(MAX),\n    [SearchDetails] NVARCHAR(MAX),\n    [LastEditedBy] INT,\n    -- [ValidFrom] DATETIME2(7),\n    -- [ValidTo]  DATETIME2(7),\n    -- [ts]  DATETIME2(7),\n    [CurrentFlag] BIT,\n    [EffDateFrom] DATETIME2(7),\n    [EffDateTo] DATETIME2(7)\n)\nAS \nSELECT \n    -- [op],\n    [StockItemID],\n    [StockItemName],\n    [SupplierID],\n    [ColorID],\n    [UnitPackageID],\n    [OuterPackageID],\n    [Brand],\n    [Size],\n    [LeadTimeDays],\n    [QuantityPerOuter],\n    [IsChillerStock],\n    [Barcode],\n    [TaxRate],\n    [UnitPrice],\n    [RecommendedRetailPrice],\n    [TypicalWeightPerUnit],\n    [MarketingComments],\n    [InternalComments],\n    [Photo],\n    [CustomFields],\n    [Tags],\n    [SearchDetails],\n    [LastEditedBy],\n    NULL AS [CurrentFlag],\n    [ValidFrom] as [EffDateFrom],\n    '99991231' AS [EffDateTo]\nFROM [CDClanding].[dbo].[stock_updates]",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

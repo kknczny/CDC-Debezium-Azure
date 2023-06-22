@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "083ee83a-860b-434f-ba00-673c9156bac0"
+				"spark.autotune.trackingId": "5e00a4ca-f24b-4523-a649-fd0db9bb4376"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"from pyspark.sql.functions import *\r\n",
 					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType, TimestampType, DecimalType"
 				],
-				"execution_count": 19
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -101,7 +101,7 @@
 					"\r\n",
 					"ehConf[\"eventhubs.connectionString\"] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionStringEntity)"
 				],
-				"execution_count": 20
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -208,7 +208,7 @@
 					"                (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
 					"        )"
 				],
-				"execution_count": 21
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -273,7 +273,7 @@
 					"}\r\n",
 					"    "
 				],
-				"execution_count": 22
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -297,7 +297,7 @@
 					"\r\n",
 					"# df_parsed = df_raw.withColumn(\"parsed\", col(\"body\").cast(\"string\"))"
 				],
-				"execution_count": 23
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -318,7 +318,7 @@
 					"# print(\"-----\")\r\n",
 					"# df_raw.printSchema()"
 				],
-				"execution_count": null
+				"execution_count": 6
 			},
 			{
 				"cell_type": "code",
@@ -337,7 +337,7 @@
 					"cdc_schema = get_cdc_schema(object_schema)\r\n",
 					"inner_struct_fields = INNER_SCHEMA_MAP[object_schema]"
 				],
-				"execution_count": 24
+				"execution_count": 7
 			},
 			{
 				"cell_type": "code",
@@ -389,7 +389,7 @@
 					"    StructField(\"payload\", StructType(outer_struct_fields), nullable=True)\r\n",
 					"])"
 				],
-				"execution_count": 25
+				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
@@ -407,7 +407,7 @@
 				"source": [
 					"df_deserialized = deserialize_cdc_msg(df_raw, cdc_schema)"
 				],
-				"execution_count": 26
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -425,7 +425,7 @@
 				"source": [
 					"df_deserialized.printSchema()"
 				],
-				"execution_count": 27
+				"execution_count": 10
 			},
 			{
 				"cell_type": "code",
@@ -449,7 +449,7 @@
 					"# \t\t\t\t.option(\"path\", output_loc)    \\\r\n",
 					"# \t\t\t\t.start()"
 				],
-				"execution_count": null
+				"execution_count": 11
 			},
 			{
 				"cell_type": "code",
@@ -467,7 +467,7 @@
 				"source": [
 					"# query_test.stop()"
 				],
-				"execution_count": null
+				"execution_count": 12
 			},
 			{
 				"cell_type": "code",
@@ -489,7 +489,7 @@
 					"# print(\"-----\")\r\n",
 					"# print(query_test.exception())"
 				],
-				"execution_count": null
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -505,9 +505,9 @@
 					}
 				},
 				"source": [
-					"CDC_query.stop()"
+					"# CDC_query.stop()"
 				],
-				"execution_count": null
+				"execution_count": 14
 			},
 			{
 				"cell_type": "code",
@@ -540,7 +540,7 @@
 					"    .option(\"path\", output_loc)    \\\r\n",
 					"    .start()"
 				],
-				"execution_count": 28
+				"execution_count": 15
 			},
 			{
 				"cell_type": "code",
@@ -562,7 +562,7 @@
 					"print(\"-----\")\r\n",
 					"print(CDC_query.exception())"
 				],
-				"execution_count": 29
+				"execution_count": 16
 			},
 			{
 				"cell_type": "code",
@@ -581,12 +581,10 @@
 					"pq_path = f\"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/{type_of_data}/output/year=*/month=*/day=*/hour=*/*.parquet\"\r\n",
 					"\r\n",
 					"df_pq = spark.read.format(\"parquet\").load(pq_path)\r\n",
-					"            .withColumn('', )\r\n",
 					"\r\n",
-					"\r\n",
-					"df_pq.write.mode(\"append\").saveAsTable(f\"bronze.{type_of_data}_updates\")"
+					"df_pq.write.mode(\"append\").saveAsTable(f\"CDClanding.{type_of_data}_updates\")"
 				],
-				"execution_count": 35
+				"execution_count": 18
 			},
 			{
 				"cell_type": "code",
