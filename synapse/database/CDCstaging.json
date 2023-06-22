@@ -1,0 +1,23 @@
+{
+	"name": "CDCstaging",
+	"properties": {
+		"Name": "CDCstaging",
+		"EntityType": "DATABASE",
+		"Description": "silver layer",
+		"Origin": {
+			"Type": "SPARK"
+		},
+		"Properties": {
+			"IsSyMSCDMDatabase": true
+		},
+		"Source": {
+			"Provider": "ADLS",
+			"Location": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDCstaging",
+			"Properties": {
+				"FormatType": "parquet",
+				"LinkedServiceName": "asa-cdc-streaming-WorkspaceDefaultStorage"
+			}
+		}
+	},
+	"type": "DATABASE"
+}
