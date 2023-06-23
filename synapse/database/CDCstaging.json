@@ -3,7 +3,7 @@
 	"properties": {
 		"Name": "CDCstaging",
 		"EntityType": "DATABASE",
-		"Description": "silver layer",
+		"Description": "Silver layer",
 		"Origin": {
 			"Type": "SPARK"
 		},
@@ -12,12 +12,15 @@
 		},
 		"Source": {
 			"Provider": "ADLS",
-			"Location": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDCstaging",
+			"Location": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDClanding_copy_unp",
 			"Properties": {
 				"FormatType": "parquet",
 				"LinkedServiceName": "asa-cdc-streaming-WorkspaceDefaultStorage"
 			}
-		}
+		},
+		"PublishStatus": "PUBLISHED",
+		"ObjectVersion": 1,
+		"ObjectId": "1483f022-08b7-4f8e-8763-69279521cb71"
 	},
 	"type": "DATABASE"
 }
