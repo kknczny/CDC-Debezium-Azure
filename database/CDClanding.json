@@ -1,0 +1,26 @@
+{
+	"name": "CDClanding",
+	"properties": {
+		"Name": "CDClanding",
+		"EntityType": "DATABASE",
+		"Origin": {
+			"Type": "SPARK"
+		},
+		"Properties": {
+			"IsSyMSCDMDatabase": true
+		},
+		"Description": "bronze layer",
+		"Source": {
+			"Provider": "ADLS",
+			"Location": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDClanding",
+			"Properties": {
+				"FormatType": "parquet",
+				"LinkedServiceName": "asa-cdc-streaming-WorkspaceDefaultStorage"
+			}
+		},
+		"PublishStatus": "PUBLISHED",
+		"ObjectVersion": 1,
+		"ObjectId": "56760c94-4aa2-43d4-b562-ccf1fb2c0b3e"
+	},
+	"type": "DATABASE"
+}
