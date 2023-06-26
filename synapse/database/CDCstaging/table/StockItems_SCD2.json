@@ -1,7 +1,7 @@
 {
-	"name": "CDCstaging_SCD2",
+	"name": "StockItems_SCD2",
 	"properties": {
-		"Name": "CDCstaging_SCD2",
+		"Name": "StockItems_SCD2",
 		"EntityType": "TABLE",
 		"Namespace": {
 			"DatabaseName": "CDCstaging"
@@ -352,13 +352,13 @@
 				"FormatType": "parquet",
 				"SerializeLib": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
 				"Properties": {
-					"path": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDCstaging/CDCstaging_SCD2",
+					"path": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/staging/stock",
 					"FormatTypeSetToDatabaseDefault": false
 				}
 			},
 			"Source": {
 				"Provider": "ADLS",
-				"Location": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDCstaging/CDCstaging_SCD2",
+				"Location": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/staging/stock",
 				"Properties": {
 					"LinkedServiceName": "asa-cdc-streaming-WorkspaceDefaultStorage",
 					"LocationSetToDatabaseDefault": false
