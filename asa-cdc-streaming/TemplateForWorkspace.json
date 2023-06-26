@@ -211,7 +211,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "3a1fe6e6-a88f-45bf-8244-38b6ef0f2143"
+						"spark.autotune.trackingId": "42a01e86-79c2-4a19-b0c0-3c5ebed47647"
 					}
 				},
 				"metadata": {
@@ -236,7 +236,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 10,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -259,7 +260,196 @@
 							"df_pq.write.mode(\"append\").saveAsTable(f\"CDClanding.{type_of_data}_updates\")"
 						],
 						"outputs": [],
-						"execution_count": 3
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"INSERT INTO CDCStaging.CDCstaging_SCD2 --WITH (TABLOCK)\r\n",
+							"  (\r\n",
+							"    [StockItemID], \r\n",
+							"    [StockItemName], \r\n",
+							"    [SupplierID], \r\n",
+							"    [ColorID], \r\n",
+							"    [UnitPackageID], \r\n",
+							"    [OuterPackageID],\r\n",
+							"    [Brand],\r\n",
+							"    [Size],\r\n",
+							"    [LeadTimeDays],\r\n",
+							"    [QuantityPerOuter],\r\n",
+							"    [IsChillerStock],\r\n",
+							"    [Barcode],\r\n",
+							"    [TaxRate],\r\n",
+							"    [UnitPrice],\r\n",
+							"    [RecommendedRetailPrice],\r\n",
+							"    [TypicalWeightPerUnit],\r\n",
+							"    [MarketingComments],\r\n",
+							"    [InternalComments],\r\n",
+							"    [Photo],\r\n",
+							"    [CustomFields],\r\n",
+							"    [Tags],\r\n",
+							"    [SearchDetails],\r\n",
+							"    [LastEditedBy],\r\n",
+							"    [CurrentFlag],\r\n",
+							"    [EffDateFrom],\r\n",
+							"    [EffDateTo]\r\n",
+							"  )\r\n",
+							"SELECT \r\n",
+							"    [StockItemID],\r\n",
+							"    [StockItemName],\r\n",
+							"    [SupplierID],\r\n",
+							"    [ColorID],\r\n",
+							"    [UnitPackageID],\r\n",
+							"    [OuterPackageID],\r\n",
+							"    [Brand],\r\n",
+							"    [Size],\r\n",
+							"    [LeadTimeDays],\r\n",
+							"    [QuantityPerOuter],\r\n",
+							"    [IsChillerStock],\r\n",
+							"    [Barcode],\r\n",
+							"    [TaxRate],\r\n",
+							"    [UnitPrice],\r\n",
+							"    [RecommendedRetailPrice],\r\n",
+							"    [TypicalWeightPerUnit],\r\n",
+							"    [MarketingComments],\r\n",
+							"    [InternalComments],\r\n",
+							"    [Photo],\r\n",
+							"    [CustomFields],\r\n",
+							"    [Tags],\r\n",
+							"    [SearchDetails],\r\n",
+							"    [LastEditedBy],\r\n",
+							"    NULL,\r\n",
+							"    [ValidFrom],    --getdate()\r\n",
+							"    NULL\r\n",
+							"FROM\r\n",
+							"  (MERGE INTO CDCStaging.CDCstaging_SCD2 AS tgt\r\n",
+							"   USING\r\n",
+							"    -- Query to return staged customer data\r\n",
+							"    (SELECT     \r\n",
+							"        [StockItemID],\r\n",
+							"        [StockItemName],\r\n",
+							"        [SupplierID],\r\n",
+							"        [ColorID],\r\n",
+							"        [UnitPackageID],\r\n",
+							"        [OuterPackageID],\r\n",
+							"        [Brand],\r\n",
+							"        [Size],\r\n",
+							"        [LeadTimeDays],\r\n",
+							"        [QuantityPerOuter],\r\n",
+							"        [IsChillerStock],\r\n",
+							"        [Barcode],\r\n",
+							"        [TaxRate],\r\n",
+							"        [UnitPrice],\r\n",
+							"        [RecommendedRetailPrice],\r\n",
+							"        [TypicalWeightPerUnit],\r\n",
+							"        [MarketingComments],\r\n",
+							"        [InternalComments],\r\n",
+							"        [Photo],\r\n",
+							"        [CustomFields],\r\n",
+							"        [Tags],\r\n",
+							"        [SearchDetails],\r\n",
+							"        [LastEditedBy])\r\n",
+							"     FROM CDClanding.stock_updates\r\n",
+							"     AS src ([StockItemID],\r\n",
+							"        [StockItemName],\r\n",
+							"        [SupplierID],\r\n",
+							"        [ColorID],\r\n",
+							"        [UnitPackageID],\r\n",
+							"        [OuterPackageID],\r\n",
+							"        [Brand],\r\n",
+							"        [Size],\r\n",
+							"        [LeadTimeDays],\r\n",
+							"        [QuantityPerOuter],\r\n",
+							"        [IsChillerStock],\r\n",
+							"        [Barcode],\r\n",
+							"        [TaxRate],\r\n",
+							"        [UnitPrice],\r\n",
+							"        [RecommendedRetailPrice],\r\n",
+							"        [TypicalWeightPerUnit],\r\n",
+							"        [MarketingComments],\r\n",
+							"        [InternalComments],\r\n",
+							"        [Photo],\r\n",
+							"        [CustomFields],\r\n",
+							"        [Tags],\r\n",
+							"        [SearchDetails],\r\n",
+							"        [LastEditedBy])\r\n",
+							"   -- Match staged customers to existing (current) dimension records\r\n",
+							"   ON (src.StockItemID = tgt.StockItemID AND tgt.CurrentFlag = 1)\r\n",
+							"   -- If a current record for this customer already exists, mark it as a type 2 change\r\n",
+							"   WHEN MATCHED THEN\r\n",
+							"     UPDATE\r\n",
+							"     SET tgt.CurrentFlag = 0, tgt.EffDateTo = getdate()\r\n",
+							"   -- If not, insert a new record\r\n",
+							"   WHEN NOT MATCHED THEN\r\n",
+							"     INSERT (\r\n",
+							"        [StockItemID], \r\n",
+							"        [StockItemName], \r\n",
+							"        [SupplierID], \r\n",
+							"        [ColorID], \r\n",
+							"        [UnitPackageID], \r\n",
+							"        [OuterPackageID],\r\n",
+							"        [Brand],\r\n",
+							"        [Size],\r\n",
+							"        [LeadTimeDays],\r\n",
+							"        [QuantityPerOuter],\r\n",
+							"        [IsChillerStock],\r\n",
+							"        [Barcode],\r\n",
+							"        [TaxRate],\r\n",
+							"        [UnitPrice],\r\n",
+							"        [RecommendedRetailPrice],\r\n",
+							"        [TypicalWeightPerUnit],\r\n",
+							"        [MarketingComments],\r\n",
+							"        [InternalComments],\r\n",
+							"        [Photo],\r\n",
+							"        [CustomFields],\r\n",
+							"        [Tags],\r\n",
+							"        [SearchDetails],\r\n",
+							"        [LastEditedBy],\r\n",
+							"        [CurrentFlag],\r\n",
+							"        [EffDateFrom],\r\n",
+							"        [EffDateTo]\r\n",
+							"        )\r\n",
+							"     VALUES ([StockItemID],\r\n",
+							"    [StockItemName],\r\n",
+							"    [SupplierID],\r\n",
+							"    [ColorID],\r\n",
+							"    [UnitPackageID],\r\n",
+							"    [OuterPackageID],\r\n",
+							"    [Brand],\r\n",
+							"    [Size],\r\n",
+							"    [LeadTimeDays],\r\n",
+							"    [QuantityPerOuter],\r\n",
+							"    [IsChillerStock],\r\n",
+							"    [Barcode],\r\n",
+							"    [TaxRate],\r\n",
+							"    [UnitPrice],\r\n",
+							"    [RecommendedRetailPrice],\r\n",
+							"    [TypicalWeightPerUnit],\r\n",
+							"    [MarketingComments],\r\n",
+							"    [InternalComments],\r\n",
+							"    [Photo],\r\n",
+							"    [CustomFields],\r\n",
+							"    [Tags],\r\n",
+							"    [SearchDetails],\r\n",
+							"    [LastEditedBy],\r\n",
+							"    NULL,\r\n",
+							"    [ValidFrom],    --getdate()\r\n",
+							"    NULL\r\n",
+							"    )"
+						],
+						"outputs": [],
+						"execution_count": 2
 					},
 					{
 						"cell_type": "code",
@@ -305,7 +495,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "af2e53a5-01c9-4e69-8097-3aefdd39c1a8"
+						"spark.autotune.trackingId": "a746e610-c733-437b-8bc3-935aab44c929"
 					}
 				},
 				"metadata": {
@@ -330,7 +520,8 @@
 						"sparkVersion": "3.3",
 						"nodeCount": 10,
 						"cores": 4,
-						"memory": 28
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -358,6 +549,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"type_of_data = 'stock'\r\n",
 							"\r\n",
@@ -970,7 +1162,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "integer"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "StockItemName",
@@ -982,7 +1175,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "SupplierID",
@@ -993,7 +1187,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "integer"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "ColorID",
@@ -1004,7 +1199,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "integer"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "UnitPackageID",
@@ -1015,7 +1211,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "integer"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "OuterPackageID",
@@ -1026,7 +1223,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "integer"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "Brand",
@@ -1038,7 +1236,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "Size",
@@ -1050,7 +1249,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "LeadTimeDays",
@@ -1061,7 +1261,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "integer"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "QuantityPerOuter",
@@ -1072,7 +1273,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "integer"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "IsChillerStock",
@@ -1083,7 +1285,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "boolean"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "Barcode",
@@ -1095,7 +1298,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "TaxRate",
@@ -1108,7 +1312,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "decimal"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "UnitPrice",
@@ -1121,7 +1326,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "decimal"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "RecommendedRetailPrice",
@@ -1134,7 +1340,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "decimal"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "TypicalWeightPerUnit",
@@ -1147,7 +1354,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "decimal"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "MarketingComments",
@@ -1159,7 +1367,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "InternalComments",
@@ -1171,7 +1380,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "Photo",
@@ -1183,7 +1393,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "CustomFields",
@@ -1195,7 +1406,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "Tags",
@@ -1207,7 +1419,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "SearchDetails",
@@ -1219,7 +1432,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "string"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "LastEditedBy",
@@ -1230,7 +1444,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "integer"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "CurrentFlag",
@@ -1241,7 +1456,8 @@
 											"Properties": {
 												"HIVE_TYPE_STRING": "binary"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "EffDateFrom",
@@ -1253,7 +1469,8 @@
 												"TimestampFormat": "YYYY-MM-DD HH:MM:SS.fffffffff",
 												"HIVE_TYPE_STRING": "timestamp"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									},
 									{
 										"Name": "EffDateTo",
@@ -1265,7 +1482,8 @@
 												"TimestampFormat": "YYYY-MM-DD HH:MM:SS.fffffffff",
 												"HIVE_TYPE_STRING": "timestamp"
 											}
-										}
+										},
+										"DeltaFormatInvalidMessages": []
 									}
 								],
 								"Format": {
@@ -1298,11 +1516,795 @@
 								"Description": "",
 								"DisplayFolderInfo": "{\"name\":\"Others\",\"colorCode\":\"\"}",
 								"PrimaryKeys": "",
-								"spark.sql.sources.provider": "parquet"
+								"spark.sql.sources.provider": "parquet",
+								"sql:IsAppendOnly": true
 							},
 							"Retention": 0,
 							"Temporary": false,
-							"IsRewriteEnabled": false
+							"IsRewriteEnabled": false,
+							"Partitioning": {}
+						},
+						"Source": {
+							"Type": "SPARK"
+						}
+					},
+					{
+						"ActionType": "CREATE",
+						"OldEntity": null,
+						"NewEntity": {
+							"Name": "StockItems_SCD2",
+							"EntityType": "TABLE",
+							"Namespace": {
+								"DatabaseName": "CDCstaging"
+							},
+							"Description": "",
+							"TableType": "EXTERNAL",
+							"Origin": {
+								"Type": "SPARK"
+							},
+							"StorageDescriptor": {
+								"Columns": [
+									{
+										"Name": "StockItemID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "StockItemName",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "SupplierID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "ColorID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "UnitPackageID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "OuterPackageID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "Brand",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "Size",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "LeadTimeDays",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "QuantityPerOuter",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "IsChillerStock",
+										"OriginDataTypeName": {
+											"TypeName": "boolean",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "boolean"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "Barcode",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "TaxRate",
+										"OriginDataTypeName": {
+											"TypeName": "decimal",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Precision": 18,
+											"Scale": 3,
+											"Properties": {
+												"HIVE_TYPE_STRING": "decimal"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "UnitPrice",
+										"OriginDataTypeName": {
+											"TypeName": "decimal",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Precision": 18,
+											"Scale": 2,
+											"Properties": {
+												"HIVE_TYPE_STRING": "decimal"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "RecommendedRetailPrice",
+										"OriginDataTypeName": {
+											"TypeName": "decimal",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Precision": 18,
+											"Scale": 2,
+											"Properties": {
+												"HIVE_TYPE_STRING": "decimal"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "TypicalWeightPerUnit",
+										"OriginDataTypeName": {
+											"TypeName": "decimal",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Precision": 18,
+											"Scale": 3,
+											"Properties": {
+												"HIVE_TYPE_STRING": "decimal"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "MarketingComments",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "InternalComments",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "Photo",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "CustomFields",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "Tags",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "SearchDetails",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "LastEditedBy",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "CurrentFlag",
+										"OriginDataTypeName": {
+											"TypeName": "binary",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "binary"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "EffDateFrom",
+										"OriginDataTypeName": {
+											"TypeName": "timestamp",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"TimestampFormat": "YYYY-MM-DD HH:MM:SS.fffffffff",
+												"HIVE_TYPE_STRING": "timestamp"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "EffDateTo",
+										"OriginDataTypeName": {
+											"TypeName": "timestamp",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"TimestampFormat": "YYYY-MM-DD HH:MM:SS.fffffffff",
+												"HIVE_TYPE_STRING": "timestamp"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									}
+								],
+								"Format": {
+									"InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+									"OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+									"FormatType": "parquet",
+									"SerializeLib": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+									"Properties": {
+										"path": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/staging/stock",
+										"FormatTypeSetToDatabaseDefault": false
+									}
+								},
+								"Source": {
+									"Provider": "ADLS",
+									"Location": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/staging/stock",
+									"Properties": {
+										"LinkedServiceName": "asa-cdc-streaming-WorkspaceDefaultStorage",
+										"LocationSetToDatabaseDefault": false
+									}
+								},
+								"Properties": {
+									"textinputformat.record.delimiter": ",",
+									"compression": "{\"type\":\"Snappy\",\"level\":\"optimal\"}",
+									"derivedModelAttributeInfo": "{\"attributeReferences\":{}}"
+								},
+								"Compressed": false,
+								"IsStoredAsSubdirectories": false
+							},
+							"Properties": {
+								"Description": "",
+								"DisplayFolderInfo": "{\"name\":\"Others\",\"colorCode\":\"\"}",
+								"PrimaryKeys": "",
+								"spark.sql.sources.provider": "parquet",
+								"sql:IsAppendOnly": true
+							},
+							"Retention": 0,
+							"Temporary": false,
+							"IsRewriteEnabled": false,
+							"Partitioning": {}
+						},
+						"Source": {
+							"Type": "SPARK"
+						}
+					},
+					{
+						"ActionType": "CREATE",
+						"OldEntity": null,
+						"NewEntity": {
+							"Name": "CDCstaging_SCD2",
+							"EntityType": "TABLE",
+							"Namespace": {
+								"DatabaseName": "CDCstaging"
+							},
+							"Description": "",
+							"TableType": "EXTERNAL",
+							"Origin": {
+								"Type": "SPARK"
+							},
+							"StorageDescriptor": {
+								"Columns": [
+									{
+										"Name": "StockItemID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "StockItemName",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "SupplierID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "ColorID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "UnitPackageID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "OuterPackageID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "Brand",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "Size",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "LeadTimeDays",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "QuantityPerOuter",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "IsChillerStock",
+										"OriginDataTypeName": {
+											"TypeName": "boolean",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "boolean"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "Barcode",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "TaxRate",
+										"OriginDataTypeName": {
+											"TypeName": "decimal",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Precision": 18,
+											"Scale": 3,
+											"Properties": {
+												"HIVE_TYPE_STRING": "decimal"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "UnitPrice",
+										"OriginDataTypeName": {
+											"TypeName": "decimal",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Precision": 18,
+											"Scale": 2,
+											"Properties": {
+												"HIVE_TYPE_STRING": "decimal"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "RecommendedRetailPrice",
+										"OriginDataTypeName": {
+											"TypeName": "decimal",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Precision": 18,
+											"Scale": 2,
+											"Properties": {
+												"HIVE_TYPE_STRING": "decimal"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "TypicalWeightPerUnit",
+										"OriginDataTypeName": {
+											"TypeName": "decimal",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Precision": 18,
+											"Scale": 3,
+											"Properties": {
+												"HIVE_TYPE_STRING": "decimal"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "MarketingComments",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "InternalComments",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "Photo",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "CustomFields",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "Tags",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "SearchDetails",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "LastEditedBy",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "CurrentFlag",
+										"OriginDataTypeName": {
+											"TypeName": "binary",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "binary"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "EffDateFrom",
+										"OriginDataTypeName": {
+											"TypeName": "timestamp",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"TimestampFormat": "YYYY-MM-DD HH:MM:SS.fffffffff",
+												"HIVE_TYPE_STRING": "timestamp"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									},
+									{
+										"Name": "EffDateTo",
+										"OriginDataTypeName": {
+											"TypeName": "timestamp",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"TimestampFormat": "YYYY-MM-DD HH:MM:SS.fffffffff",
+												"HIVE_TYPE_STRING": "timestamp"
+											}
+										},
+										"DeltaFormatInvalidMessages": []
+									}
+								],
+								"Format": {
+									"InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+									"OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+									"FormatType": "parquet",
+									"SerializeLib": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+									"Properties": {
+										"path": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDCstaging/CDCstaging_SCD2",
+										"FormatTypeSetToDatabaseDefault": false
+									}
+								},
+								"Source": {
+									"Provider": "ADLS",
+									"Location": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDCstaging/CDCstaging_SCD2",
+									"Properties": {
+										"LinkedServiceName": "asa-cdc-streaming-WorkspaceDefaultStorage",
+										"LocationSetToDatabaseDefault": false
+									}
+								},
+								"Properties": {
+									"textinputformat.record.delimiter": ",",
+									"compression": "{\"type\":\"Snappy\",\"level\":\"optimal\"}",
+									"derivedModelAttributeInfo": "{\"attributeReferences\":{}}"
+								},
+								"Compressed": false,
+								"IsStoredAsSubdirectories": false
+							},
+							"Properties": {
+								"Description": "",
+								"DisplayFolderInfo": "{\"name\":\"Others\",\"colorCode\":\"\"}",
+								"PrimaryKeys": "",
+								"spark.sql.sources.provider": "parquet",
+								"sql:IsAppendOnly": true
+							},
+							"Retention": 0,
+							"Temporary": false,
+							"IsRewriteEnabled": false,
+							"Partitioning": {}
 						},
 						"Source": {
 							"Type": "SPARK"
@@ -1337,6 +2339,26 @@
 			},
 			"dependsOn": [],
 			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 1')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "INSERT INTO CDCStaging.dbo.StockItems_SCD2\n  (\n    [StockItemID], \n    [StockItemName], \n    [SupplierID], \n    [ColorID], \n    [UnitPackageID], \n    [OuterPackageID],\n    [Brand],\n    [Size],\n    [LeadTimeDays],\n    [QuantityPerOuter],\n    [IsChillerStock],\n    [Barcode],\n    [TaxRate],\n    [UnitPrice],\n    [RecommendedRetailPrice],\n    [TypicalWeightPerUnit],\n    [MarketingComments],\n    [InternalComments],\n    [Photo],\n    [CustomFields],\n    [Tags],\n    [SearchDetails],\n    [LastEditedBy],\n    [CurrentFlag],\n    [EffDateFrom],\n    [EffDateTo]\n  )\nSELECT \n    [StockItemID],\n    [StockItemName],\n    [SupplierID],\n    [ColorID],\n    [UnitPackageID],\n    [OuterPackageID],\n    [Brand],\n    [Size],\n    [LeadTimeDays],\n    [QuantityPerOuter],\n    [IsChillerStock],\n    [Barcode],\n    [TaxRate],\n    [UnitPrice],\n    [RecommendedRetailPrice],\n    [TypicalWeightPerUnit],\n    [MarketingComments],\n    [InternalComments],\n    [Photo],\n    [CustomFields],\n    [Tags],\n    [SearchDetails],\n    [LastEditedBy],\n    NULL,\n    [ValidFrom],    --getdate()\n    NULL\nFROM CDClanding.dbo.stock_updates;\n\n\n  (\n    MERGE CDCStaging.dbo.StockItems_SCD2 AS tgt\n    USING\n    -- Query to return staged customer data\n    (\n        SELECT     \n        [StockItemID],\n        [StockItemName],\n        [SupplierID],\n        [ColorID],\n        [UnitPackageID],\n        [OuterPackageID],\n        [Brand],\n        [Size],\n        [LeadTimeDays],\n        [QuantityPerOuter],\n        [IsChillerStock],\n        [Barcode],\n        [TaxRate],\n        [UnitPrice],\n        [RecommendedRetailPrice],\n        [TypicalWeightPerUnit],\n        [MarketingComments],\n        [InternalComments],\n        [Photo],\n        [CustomFields],\n        [Tags],\n        [SearchDetails],\n        [LastEditedBy]\n     FROM CDClanding.dbo.stock_updates\n     ) AS src \n     (\n        [StockItemID],\n        [StockItemName],\n        [SupplierID],\n        [ColorID],\n        [UnitPackageID],\n        [OuterPackageID],\n        [Brand],\n        [Size],\n        [LeadTimeDays],\n        [QuantityPerOuter],\n        [IsChillerStock],\n        [Barcode],\n        [TaxRate],\n        [UnitPrice],\n        [RecommendedRetailPrice],\n        [TypicalWeightPerUnit],\n        [MarketingComments],\n        [InternalComments],\n        [Photo],\n        [CustomFields],\n        [Tags],\n        [SearchDetails],\n        [LastEditedBy]\n    )\n   -- Match staged customers to existing (current) dimension records\n   ON (src.StockItemID = tgt.StockItemID AND tgt.CurrentFlag = 1)\n   -- If a current record for this customer already exists, mark it as a type 2 change\n   WHEN MATCHED THEN\n     UPDATE\n     SET tgt.CurrentFlag = 0, tgt.EffDateTo = getdate()\n   -- If not, insert a new record\n   WHEN NOT MATCHED THEN\n     INSERT \n     (\n        [StockItemID], \n        [StockItemName], \n        [SupplierID], \n        [ColorID], \n        [UnitPackageID], \n        [OuterPackageID],\n        [Brand],\n        [Size],\n        [LeadTimeDays],\n        [QuantityPerOuter],\n        [IsChillerStock],\n        [Barcode],\n        [TaxRate],\n        [UnitPrice],\n        [RecommendedRetailPrice],\n        [TypicalWeightPerUnit],\n        [MarketingComments],\n        [InternalComments],\n        [Photo],\n        [CustomFields],\n        [Tags],\n        [SearchDetails],\n        [LastEditedBy],\n        [CurrentFlag],\n        [EffDateFrom],\n        [EffDateTo]\n        )\n     VALUES ([StockItemID],\n        [StockItemName],\n        [SupplierID],\n        [ColorID],\n        [UnitPackageID],\n        [OuterPackageID],\n        [Brand],\n        [Size],\n        [LeadTimeDays],\n        [QuantityPerOuter],\n        [IsChillerStock],\n        [Barcode],\n        [TaxRate],\n        [UnitPrice],\n        [RecommendedRetailPrice],\n        [TypicalWeightPerUnit],\n        [MarketingComments],\n        [InternalComments],\n        [Photo],\n        [CustomFields],\n        [Tags],\n        [SearchDetails],\n        [LastEditedBy],\n        NULL,\n        [ValidFrom],    --getdate()\n        NULL\n        );",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": -1
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
 		}
 	]
 }
