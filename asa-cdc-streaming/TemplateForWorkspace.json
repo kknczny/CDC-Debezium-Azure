@@ -1,0 +1,1342 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": "Workspace name",
+			"defaultValue": "asa-cdc-streaming"
+		},
+		"asa-cdc-streaming-WorkspaceDefaultSqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'asa-cdc-streaming-WorkspaceDefaultSqlServer'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:asa-cdc-streaming.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"asa-cdc-streaming-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://dlcdcstreaming.dfs.core.windows.net"
+		},
+		"cdcstreamingkv_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://cdc-streaming-kv.vault.azure.net/"
+		}
+	},
+	"variables": {
+		"workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workspaceName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('workspaceName'), '/asa-cdc-streaming-WorkspaceDefaultSqlServer')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"DBName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('asa-cdc-streaming-WorkspaceDefaultSqlServer_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/asa-cdc-streaming-WorkspaceDefaultStorage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('asa-cdc-streaming-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/cdcstreamingkv')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('cdcstreamingkv_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/init_schema_format_tables')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "USE [cdc-synapse]\n\nCREATE EXTERNAL DATA SOURCE [ORDERS_LANDING]\nWITH (\n\tLOCATION = 'https://dlcdcstreaming.dfs.core.windows.net/dlcdcstreaming/landing/orders/',\n\t-- CREDENTIAL = [SynapseIdentity]\n)\nGO\n\nCREATE EXTERNAL DATA SOURCE [STOCK_LANDING]\nWITH (\n\tLOCATION = 'https://dlcdcstreaming.dfs.core.windows.net/dlcdcstreaming/landing/stock/',\n\t-- CREDENTIAL = [SynapseIdentity]\n)\nGO\n\nCREATE EXTERNAL FILE FORMAT ParquetFF\nWITH (\n   FORMAT_TYPE = PARQUET,\n   DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n)\nGO\n\nCREATE EXTERNAL DATA SOURCE [ORDERS_STAGING]\nWITH (\n\tLOCATION = 'https://dlcdcstreaming.dfs.core.windows.net/dlcdcstreaming/staging/orders/',\n\t-- CREDENTIAL = [SynapseIdentity]\n)\n\n\nCREATE EXTERNAL DATA SOURCE [STOCK_STAGING]\nWITH (\n\tLOCATION = 'https://dlcdcstreaming.dfs.core.windows.net/dlcdcstreaming/staging/stock/',\n\t-- CREDENTIAL = [SynapseIdentity]\n)\nGO\n\nCREATE SCHEMA Landing\nGO\n\nCREATE SCHEMA Staging\nGO\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "cdc-synapse",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/lake_db_draft_table_create')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "USE CDCStaging\n\nCREATE TABLE [CDCstaging].[dbo].[StockItems_SCD2]\n(\n    -- [operation] NVARCHAR(1),\n    [StockItemID] INT,\n    [StockItemName] NVARCHAR(100),\n    [SupplierID] INT,\n    [ColorID] INT,\n    [UnitPackageID] INT,\n    [OuterPackageID] INT,\n    [Brand] NVARCHAR(50),\n    [Size] NVARCHAR(20),\n    [LeadTimeDays]  INT,\n    [QuantityPerOuter] INT,\n    [IsChillerStock] BIT,\n    [Barcode] NVARCHAR(50),\n    [TaxRate] DECIMAL(18,3),\n    [UnitPrice] DECIMAL(18,2),\n    [RecommendedRetailPrice] DECIMAL(18,2),\n    [TypicalWeightPerUnit] DECIMAL(18,3),\n    [MarketingComments] NVARCHAR(MAX),\n    [InternalComments] NVARCHAR(MAX),\n    [Photo] NVARCHAR(MAX),\n    [CustomFields] NVARCHAR(MAX),\n    [Tags] NVARCHAR(MAX),\n    [SearchDetails] NVARCHAR(MAX),\n    [LastEditedBy] INT,\n    -- [ValidFrom] DATETIME2(7),\n    -- [ValidTo]  DATETIME2(7),\n    -- [ts]  DATETIME2(7),\n    [CurrentFlag] BIT,\n    [EffDateFrom] DATETIME2(7),\n    [EffDateTo] DATETIME2(7)\n)\nAS \nSELECT \n    -- [op],\n    [StockItemID],\n    [StockItemName],\n    [SupplierID],\n    [ColorID],\n    [UnitPackageID],\n    [OuterPackageID],\n    [Brand],\n    [Size],\n    [LeadTimeDays],\n    [QuantityPerOuter],\n    [IsChillerStock],\n    [Barcode],\n    [TaxRate],\n    [UnitPrice],\n    [RecommendedRetailPrice],\n    [TypicalWeightPerUnit],\n    [MarketingComments],\n    [InternalComments],\n    [Photo],\n    [CustomFields],\n    [Tags],\n    [SearchDetails],\n    [LastEditedBy],\n    NULL AS [CurrentFlag],\n    [ValidFrom] as [EffDateFrom],\n    '99991231' AS [EffDateTo]\nFROM [CDClanding].[dbo].[stock_updates]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "CDCstaging",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/staging_orders_ext_table')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "USE [cdc-synapse]\nGO\n\nIF EXISTS(SELECT TOP 1 * FROM INFORMATION_SCHEMA.TABLES WHERE [TABLE_SCHEMA] = 'Staging' AND [TABLE_NAME] = 'Orders') DROP EXTERNAL TABLE [Staging].[Orders]  \nGO\n\nCREATE EXTERNAL TABLE [Staging].[Orders]\n        (\n        [operation] NVARCHAR(1),\n        [OrderID] INT,\n        [CustomerID] INT,\n        [SalespersonPersonID] INT,\n        [PickedByPersonID] INT,\n        [ContactPersonID] INT,\n        [BackorderOrderID] INT,\n        [OrderDate] DATE,\n        [ExpectedDeliveryDate] DATE,\n        [CustomerPurchaseOrderNumber] NVARCHAR(20),\n        [IsUndersupplyBackordered] BIT,\n        [Comments] NVARCHAR(MAX),\n        [DeliveryInstructions] NVARCHAR(MAX),\n        [InternalComments] NVARCHAR(MAX),\n        [PickingCompletedWhen] DATETIME2(7),\n        [LastEditedBy] INT,\n        [LastEditedWhen]  DATETIME2(7)\n        )\nWITH\n(\n\tLOCATION = '/orders',\n\tDATA_SOURCE = [STAGING],\n\tFILE_FORMAT = [ParquetFF]\n)\nAS\n-- SELECT \n    -- [op],\n    -- [OrderID]\n    -- [CustomerID],\n    -- [SalespersonPersonID],\n    -- [PickedByPersonID],\n    -- [ContactPersonID],\n    -- [BackorderOrderID],\n    -- [OrderDate],\n    -- [ExpectedDeliveryDate],\n    -- [CustomerPurchaseOrderNumber],\n    -- [IsUndersupplyBackordered],\n    -- [Comments],\n    -- [DeliveryInstructions],\n    -- [InternalComments],\n    -- [PickingCompletedWhen],\n    -- [LastEditedBy],\n    -- [LastEditedWhen]\n\nSELECT *\nFROM OPENROWSET(BULK '/output/year=*/month=*/day=*/hour=*/*.parquet',\n                DATA_SOURCE='ORDERS_LANDING',\n                FORMAT = 'PARQUET') AS [files]\nWHERE OrderID IS NOT NULL",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "cdc-synapse",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/staging_stockitems_ext_table')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "USE [cdc-synapse]\nGO\n\nIF EXISTS(SELECT TOP 1 * FROM INFORMATION_SCHEMA.TABLES WHERE [TABLE_SCHEMA] = 'Landing' AND [TABLE_NAME] = 'StockItems') DROP EXTERNAL TABLE [Landing].[StockItems]  \nGO\n\nCREATE EXTERNAL TABLE [Landing].[StockItems]\nWITH\n    (\n        LOCATION = '/ext_table',\n        DATA_SOURCE = [STOCK_LANDING],\n        FILE_FORMAT = [ParquetFF]\n    )   \nAS\n    SELECT *\n    FROM OPENROWSET(BULK '/output/year=*/month=*/day=*/hour=*/*.parquet',\n                    DATA_SOURCE='STOCK_LANDING',\n                    FORMAT = 'PARQUET') AS [files]\n    ORDER BY ts DESC\nGO\n\nIF EXISTS(SELECT TOP 1 * FROM INFORMATION_SCHEMA.TABLES WHERE [TABLE_SCHEMA] = 'Staging' AND [TABLE_NAME] = 'StockItems') DROP EXTERNAL TABLE [Staging].[StockItems]\nGO\n\nCREATE EXTERNAL TABLE [Staging].[StockItems]\n    (\n        -- [operation] NVARCHAR(1),\n        [StockItemID] INT,\n        [StockItemName] NVARCHAR(100),\n        [SupplierID] INT,\n        [ColorID] INT,\n        [UnitPackageID] INT,\n        [OuterPackageID] INT,\n        [Brand] NVARCHAR(50),\n        [Size] NVARCHAR(20),\n        [LeadTimeDays]  INT,\n        [QuantityPerOuter] INT,\n        [IsChillerStock] BIT,\n        [Barcode] NVARCHAR(50),\n        [TaxRate] DECIMAL(18,3),\n        [UnitPrice] DECIMAL(18,2),\n        [RecommendedRetailPrice] DECIMAL(18,2),\n        [TypicalWeightPerUnit] DECIMAL(18,3),\n        [MarketingComments] NVARCHAR(MAX),\n        [InternalComments] NVARCHAR(MAX),\n        [Photo] NVARCHAR(MAX),\n        [CustomFields] NVARCHAR(MAX),\n        [Tags] NVARCHAR(MAX),\n        [SearchDetails] NVARCHAR(MAX),\n        [LastEditedBy] INT,\n        -- [ValidFrom] DATETIME2(7),\n        -- [ValidTo]  DATETIME2(7),\n        -- [ts]  DATETIME2(7),\n        [CurrentFlag] BIT,\n        [EffDateFrom] DATETIME2(7),\n        [EffDateTo] DATETIME2(7)\n    )\nWITH (LOCATION = '/stock',\n      DATA_SOURCE = [STAGING],\n      FILE_FORMAT = [ParquetFF])\nAS \nSELECT \n    -- [op],\n    [StockItemID],\n    [StockItemName],\n    [SupplierID],\n    [ColorID],\n    [UnitPackageID],\n    [OuterPackageID],\n    [Brand],\n    [Size],\n    [LeadTimeDays],\n    [QuantityPerOuter],\n    [IsChillerStock],\n    [Barcode],\n    [TaxRate],\n    [UnitPrice],\n    [RecommendedRetailPrice],\n    [TypicalWeightPerUnit],\n    [MarketingComments],\n    [InternalComments],\n    [Photo],\n    [CustomFields],\n    [Tags],\n    [SearchDetails],\n    [LastEditedBy],\n    NULL AS [CurrentFlag],\n    [ValidFrom] as [EffDateFrom],\n    '99991231' AS [EffDateTo]\nFROM [Landing].[StockItems]\n-- ORDER BY ts DESC",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "cdc-synapse",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SCD2_merge')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "cdcsparkpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "3a1fe6e6-a88f-45bf-8244-38b6ef0f2143"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "sql"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/91b6e3ed-6c42-4e7a-8ed3-57f49a2a42ba/resourceGroups/SB_RelDB_CDC_Streaming/providers/Microsoft.Synapse/workspaces/asa-cdc-streaming/bigDataPools/cdcsparkpool",
+						"name": "cdcsparkpool",
+						"type": "Spark",
+						"endpoint": "https://asa-cdc-streaming.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/cdcsparkpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 10,
+						"cores": 4,
+						"memory": 28
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "python"
+							}
+						},
+						"source": [
+							"%%pyspark\r\n",
+							"type_of_data = 'stock'\r\n",
+							"\r\n",
+							"pq_path = f\"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/{type_of_data}/output/year=*/month=*/day=*/hour=*/*.parquet\"\r\n",
+							"\r\n",
+							"df_pq = spark.read.format(\"parquet\").load(pq_path)\r\n",
+							"\r\n",
+							"df_pq.write.mode(\"append\").saveAsTable(f\"CDClanding.{type_of_data}_updates\")"
+						],
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/event_hubs_streaming_clean')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "cdcsparkpool",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "af2e53a5-01c9-4e69-8097-3aefdd39c1a8"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/91b6e3ed-6c42-4e7a-8ed3-57f49a2a42ba/resourceGroups/SB_RelDB_CDC_Streaming/providers/Microsoft.Synapse/workspaces/asa-cdc-streaming/bigDataPools/cdcsparkpool",
+						"name": "cdcsparkpool",
+						"type": "Spark",
+						"endpoint": "https://asa-cdc-streaming.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/cdcsparkpool",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 10,
+						"cores": 4,
+						"memory": 28
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"import json\r\n",
+							"from pyspark.sql.functions import *\r\n",
+							"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType, TimestampType, DecimalType"
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"type_of_data = 'stock'\r\n",
+							"\r\n",
+							"keyVaultName = \"cdc-streaming-kv2\"\r\n",
+							"secretName = \"eh-connstring\"\r\n",
+							"connectionString = mssparkutils.credentials.getSecret(keyVaultName, secretName)\r\n",
+							"EH_name = f\"{type_of_data}-00\"\r\n",
+							"connectionStringEntity = connectionString + \";EntityPath=\" + EH_name\r\n",
+							"consumer_group = \"$Default\"\r\n",
+							"object_schema = type_of_data\r\n",
+							"\r\n",
+							"checkpoint_loc = f\"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/{type_of_data}/checkpoint/\"\r\n",
+							"output_loc = f\"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/{type_of_data}/output/\"\r\n",
+							"\r\n",
+							"# Create the starting position Dictionary\r\n",
+							"startingEventPosition = {\r\n",
+							"  \"offset\": \"-1\",         \r\n",
+							"  \"seqNo\": 0,                   # not in use\r\n",
+							"  \"enqueuedTime\": None,         # not in use\r\n",
+							"  \"isInclusive\": True,\r\n",
+							"  \"fromStartOfStream\": True     # start from beginning of Stream\r\n",
+							"}\r\n",
+							"\r\n",
+							"ehConf = {\r\n",
+							"  \"eventhubs.startingPosition\" : json.dumps(startingEventPosition),\r\n",
+							"  \"setMaxEventsPerTrigger\" : 100,\r\n",
+							"  \"eventhubs.consumerGroup\" : consumer_group\r\n",
+							"}\r\n",
+							"\r\n",
+							"ehConf[\"eventhubs.connectionString\"] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionStringEntity)"
+						],
+						"outputs": [],
+						"execution_count": 2
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"#to be moved to schemabuild module\r\n",
+							"\r\n",
+							"OBJ_SCHEMA_MAP = {\r\n",
+							"    'orders': (\r\n",
+							"        StructType()    \\\r\n",
+							"        .add(\"OrderID\", IntegerType()) \\\r\n",
+							"        .add(\"CustomerID\", IntegerType())  \\\r\n",
+							"        .add(\"SalespersonPersonID\", IntegerType()) \\\r\n",
+							"        .add(\"PickedByPersonID\", IntegerType())    \\\r\n",
+							"        .add(\"ContactPersonID\", IntegerType()) \\\r\n",
+							"        .add(\"BackorderOrderID\", IntegerType())    \\\r\n",
+							"        .add(\"OrderDate\", IntegerType())   \\\r\n",
+							"        .add(\"ExpectedDeliveryDate\", IntegerType())    \\\r\n",
+							"        .add(\"CustomerPurchaseOrderNumber\", StringType())  \\\r\n",
+							"        .add(\"IsUndersupplyBackordered\", BooleanType())    \\\r\n",
+							"        .add(\"Comments\", StringType()) \\\r\n",
+							"        .add(\"DeliveryInstructions\", StringType())   \\\r\n",
+							"        .add(\"InternalComments\", StringType()) \\\r\n",
+							"        .add(\"PickingCompletedWhen\", LongType())   \\\r\n",
+							"        .add(\"LastEditedBy\", IntegerType())    \\\r\n",
+							"        .add(\"LastEditedWhen\", LongType())\r\n",
+							"        ),\r\n",
+							"    'stock': (\r\n",
+							"        StructType()    \\\r\n",
+							"        .add(\"StockItemID\", IntegerType()) \\\r\n",
+							"        .add(\"StockItemName\", StringType()) \\\r\n",
+							"        .add(\"SupplierID\", IntegerType())  \\\r\n",
+							"        .add(\"ColorID\", IntegerType()) \\\r\n",
+							"        .add(\"UnitPackageID\", IntegerType())    \\\r\n",
+							"        .add(\"OuterPackageID\", IntegerType()) \\\r\n",
+							"        .add(\"Brand\", StringType()) \\\r\n",
+							"        .add(\"Size\", StringType()) \\\r\n",
+							"        .add(\"LeadTimeDays\", IntegerType())    \\\r\n",
+							"        .add(\"QuantityPerOuter\", IntegerType())   \\\r\n",
+							"        .add(\"IsChillerStock\", BooleanType())    \\\r\n",
+							"        .add(\"Barcode\", StringType())  \\\r\n",
+							"        .add(\"TaxRate\", DecimalType())    \\\r\n",
+							"        .add(\"UnitPrice\", DecimalType())   \\\r\n",
+							"        .add(\"RecommendedRetailPrice\", DecimalType()) \\\r\n",
+							"        .add(\"TypicalWeightPerUnit\", DecimalType())   \\\r\n",
+							"        .add(\"MarketingComments\", StringType())    \\\r\n",
+							"        .add(\"InternalComments\", StringType())    \\\r\n",
+							"        .add(\"Photo\", StringType())    \\\r\n",
+							"        .add(\"CustomFields\", StringType()) \\\r\n",
+							"        .add(\"Tags\", StringType()) \\\r\n",
+							"        .add(\"SearchDetails\", StringType()) \\\r\n",
+							"        .add(\"LastEditedBy\", IntegerType())    \\\r\n",
+							"        .add(\"ValidFrom\", LongType())    \\\r\n",
+							"        .add(\"ValidTo\", LongType())\r\n",
+							"    ),\r\n",
+							"}\r\n",
+							"    \r\n",
+							"def get_cdc_schema(obj_name: str):\r\n",
+							"    # if obj_name not in OBJ_SCHEMA_MAP.keys():\r\n",
+							"    #     raise KeyError\r\n",
+							"    obj_schema = OBJ_SCHEMA_MAP[obj_name]\r\n",
+							"    return (\r\n",
+							"        StructType()\r\n",
+							"        .add(\"op\", StringType())\r\n",
+							"        .add(\"ts_ms\", LongType())\r\n",
+							"        .add(\"before\", obj_schema)\r\n",
+							"        .add(\"after\", obj_schema)\r\n",
+							"    )\r\n",
+							"\r\n",
+							"def deserialize_cdc_msg(df: DataFrame, cdc_schema: StructType):\r\n",
+							"        df_parsed = df.withColumn(\"parsed\", col(\"body\").cast(\"string\"))\r\n",
+							"        df_payload = df_parsed  \\\r\n",
+							"                        .select(from_json(col(\"parsed\"), root_schema)   \\\r\n",
+							"                        .alias(\"parsed_json\")).select(\"parsed_json.payload\")\r\n",
+							"        return (\r\n",
+							"            df_payload.withColumn('value', from_json(to_json('payload'), cdc_schema))    \\\r\n",
+							"                .withColumn('result', when(col('value.op') == \"d\", col('value.before'))   \\\r\n",
+							"                    .otherwise(col('value.after')))\r\n",
+							"            .select(    \\\r\n",
+							"            'value.op', \\\r\n",
+							"            'result.*',    \\\r\n",
+							"            (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
+							"        )\r\n",
+							"       \r\n",
+							"def deserialize_cdc_msg_json(df: DataFrame, cdc_schema: StructType):\r\n",
+							"        df = df.select('payload')\r\n",
+							"        return (\r\n",
+							"            df.withColumn('value', from_json(to_json('payload'), cdc_schema))    \\\r\n",
+							"                .withColumn('result', when(col('value.op') == \"d\", col('value.before'))   \\\r\n",
+							"                    .otherwise(col('value.after')))\r\n",
+							"                .select(    \\\r\n",
+							"                'value.op', \\\r\n",
+							"                'result.*',    \\\r\n",
+							"                (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
+							"        )"
+						],
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"INNER_SCHEMA_MAP = {\r\n",
+							"    'orders': [\r\n",
+							"        StructField(\"OrderID\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"CustomerID\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"SalespersonPersonID\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"PickedByPersonID\", IntegerType(), nullable=True),\r\n",
+							"        StructField(\"ContactPersonID\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"BackorderOrderID\", IntegerType(), nullable=True),\r\n",
+							"        StructField(\"OrderDate\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"ExpectedDeliveryDate\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"CustomerPurchaseOrderNumber\", StringType(), nullable=True),\r\n",
+							"        StructField(\"IsUndersupplyBackordered\", BooleanType(), nullable=False),\r\n",
+							"        StructField(\"Comments\", StringType(), nullable=True),\r\n",
+							"        StructField(\"DeliveryInstructions\", StringType(), nullable=True),\r\n",
+							"        StructField(\"InternalComments\", StringType(), nullable=True),\r\n",
+							"        StructField(\"PickingCompletedWhen\", LongType(), nullable=True),\r\n",
+							"        StructField(\"LastEditedBy\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"LastEditedWhen\", LongType(), nullable=False)\r\n",
+							"    ],\r\n",
+							"    'stock': [\r\n",
+							"        StructField(\"StockItemID\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"StockItemName\", StringType(), nullable=False),\r\n",
+							"        StructField(\"SupplierID\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"ColorID\", IntegerType(), nullable=True),\r\n",
+							"        StructField(\"UnitPackageID\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"OuterPackageID\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"Brand\", StringType(), nullable=True),\r\n",
+							"        StructField(\"Size\", StringType(), nullable=True),\r\n",
+							"        StructField(\"LeadTimeDays\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"QuantityPerOuter\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"IsChillerStock\", BooleanType(), nullable=False),\r\n",
+							"        StructField(\"Barcode\", StringType(), nullable=True),\r\n",
+							"        StructField(\"TaxRate\", DecimalType(), nullable=False),\r\n",
+							"        StructField(\"UnitPrice\", DecimalType(), nullable=False),\r\n",
+							"        StructField(\"RecommendedRetailPrice\", DecimalType(), nullable=True),\r\n",
+							"        StructField(\"TypicalWeightPerUnit\", DecimalType(), nullable=False),\r\n",
+							"        StructField(\"MarketingComments\", StringType(), nullable=True),\r\n",
+							"        StructField(\"InternalComments\", StringType(), nullable=True),\r\n",
+							"        StructField(\"Photo\", StringType(), nullable=True),\r\n",
+							"        StructField(\"CustomFields\", StringType(), nullable=True),\r\n",
+							"        StructField(\"Tags\", StringType(), nullable=True),\r\n",
+							"        StructField(\"SearchDetails\", StringType(), nullable=False),\r\n",
+							"        StructField(\"LastEditedBy\", IntegerType(), nullable=False),\r\n",
+							"        StructField(\"ValidFrom\", LongType(), nullable=False),\r\n",
+							"        StructField(\"ValidTo\", LongType(), nullable=False)\r\n",
+							"    ],\r\n",
+							"}\r\n",
+							"    "
+						],
+						"outputs": [],
+						"execution_count": 4
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"df_raw = spark \\\r\n",
+							"  .readStream \\\r\n",
+							"  .format(\"eventhubs\") \\\r\n",
+							"  .options(**ehConf) \\\r\n",
+							"  .load()\r\n",
+							"\r\n",
+							"# df_parsed = df_raw.withColumn(\"parsed\", col(\"body\").cast(\"string\"))"
+						],
+						"outputs": [],
+						"execution_count": 5
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": true
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# # Check if is streaming\r\n",
+							"# print(df_raw.isStreaming)\r\n",
+							"# print(\"-----\")\r\n",
+							"# df_raw.printSchema()"
+						],
+						"outputs": [],
+						"execution_count": 6
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"cdc_schema = get_cdc_schema(object_schema)\r\n",
+							"inner_struct_fields = INNER_SCHEMA_MAP[object_schema]"
+						],
+						"outputs": [],
+						"execution_count": 7
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Define the schema for the outer struct fields\r\n",
+							"outer_struct_fields = [\r\n",
+							"    StructField(\"before\", StructType(inner_struct_fields), nullable=True),\r\n",
+							"    StructField(\"after\", StructType(inner_struct_fields), nullable=True),\r\n",
+							"    StructField(\"source\", StructType([\r\n",
+							"        StructField(\"version\", StringType(), nullable=False),\r\n",
+							"        StructField(\"connector\", StringType(), nullable=False),\r\n",
+							"        StructField(\"name\", StringType(), nullable=False),\r\n",
+							"        StructField(\"ts_ms\", LongType(), nullable=False),\r\n",
+							"        StructField(\"snapshot\", StringType(), nullable=True),\r\n",
+							"        StructField(\"db\", StringType(), nullable=False),\r\n",
+							"        StructField(\"sequence\", StringType(), nullable=True),\r\n",
+							"        StructField(\"schema\", StringType(), nullable=False),\r\n",
+							"        StructField(\"table\", StringType(), nullable=False),\r\n",
+							"        StructField(\"change_lsn\", StringType(), nullable=True),\r\n",
+							"        StructField(\"commit_lsn\", StringType(), nullable=True),\r\n",
+							"        StructField(\"event_serial_no\", LongType(), nullable=True)\r\n",
+							"    ]), nullable=False),\r\n",
+							"    StructField(\"op\", StringType(), nullable=False),\r\n",
+							"    StructField(\"ts_ms\", LongType(), nullable=True),\r\n",
+							"    StructField(\"transaction\", StructType([\r\n",
+							"        StructField(\"id\", StringType(), nullable=False),\r\n",
+							"        StructField(\"total_order\", LongType(), nullable=False),\r\n",
+							"        StructField(\"data_collection_order\", LongType(), nullable=False)\r\n",
+							"    ]), nullable=True)\r\n",
+							"]\r\n",
+							"\r\n",
+							"# Define the root schema\r\n",
+							"root_schema = StructType([\r\n",
+							"    StructField(\"schema\", StructType([\r\n",
+							"        StructField(\"type\", StringType(), nullable=False),\r\n",
+							"        StructField(\"fields\", StructType(outer_struct_fields), nullable=False)\r\n",
+							"    ]), nullable=False),\r\n",
+							"    StructField(\"payload\", StructType(outer_struct_fields), nullable=True)\r\n",
+							"])"
+						],
+						"outputs": [],
+						"execution_count": 8
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"df_deserialized = deserialize_cdc_msg(df_raw, cdc_schema)"
+						],
+						"outputs": [],
+						"execution_count": 9
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"df_deserialized.printSchema()"
+						],
+						"outputs": [],
+						"execution_count": 10
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# query_test = df_deserialized  \\\r\n",
+							"# \t\t\t\t.writeStream    \\\r\n",
+							"# \t\t\t\t.format(\"json\") \\\r\n",
+							"# \t\t\t\t.outputMode(\"append\")   \\\r\n",
+							"# \t\t\t\t.option(\"checkpointLocation\", checkpoint_loc)   \\\r\n",
+							"# \t\t\t\t.option(\"path\", output_loc)    \\\r\n",
+							"# \t\t\t\t.start()"
+						],
+						"outputs": [],
+						"execution_count": 11
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# query_test.stop()"
+						],
+						"outputs": [],
+						"execution_count": 12
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# # Check the status of query\r\n",
+							"\r\n",
+							"# print(query_test.isActive)\r\n",
+							"# print(\"-----\")\r\n",
+							"# print(query_test.exception())"
+						],
+						"outputs": [],
+						"execution_count": 13
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# CDC_query.stop()"
+						],
+						"outputs": [],
+						"execution_count": 14
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Streaming Query in scheduler pool\r\n",
+							"spark.sparkContext.setLocalProperty(\"spark.scheduler.pool\", \"pool0\")\r\n",
+							"\r\n",
+							"CDC_query = df_deserialized \\\r\n",
+							"    .withColumn(\"year\", year(\"ts\"))   \\\r\n",
+							"    .withColumn(\"month\", month(\"ts\"))   \\\r\n",
+							"    .withColumn(\"day\", dayofmonth(\"ts\"))   \\\r\n",
+							"    .withColumn(\"hour\", hour(\"ts\"))   \\\r\n",
+							"    .writeStream    \\\r\n",
+							"    .queryName(\"CDC_query\") \\\r\n",
+							"    .format(\"parquet\")  \\\r\n",
+							"    .partitionBy(\"year\", \"month\", \"day\", \"hour\")    \\\r\n",
+							"    .outputMode(\"append\")   \\\r\n",
+							"    .option(\"checkpointLocation\", checkpoint_loc)   \\\r\n",
+							"    .option(\"path\", output_loc)    \\\r\n",
+							"    .start()"
+						],
+						"outputs": [],
+						"execution_count": 15
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"# Check the status of query\r\n",
+							"\r\n",
+							"print(CDC_query.isActive)\r\n",
+							"print(\"-----\")\r\n",
+							"print(CDC_query.exception())"
+						],
+						"outputs": [],
+						"execution_count": 16
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CDClanding')]",
+			"type": "Microsoft.Synapse/workspaces/databases",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"Ddls": [
+					{
+						"ActionType": "CREATE",
+						"OldEntity": null,
+						"NewEntity": {
+							"Name": "CDClanding",
+							"EntityType": "DATABASE",
+							"Origin": {
+								"Type": "SPARK"
+							},
+							"Properties": {
+								"IsSyMSCDMDatabase": true
+							},
+							"Description": "bronze layer",
+							"Source": {
+								"Provider": "ADLS",
+								"Location": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDClanding",
+								"Properties": {
+									"FormatType": "parquet",
+									"LinkedServiceName": "asa-cdc-streaming-WorkspaceDefaultStorage"
+								}
+							},
+							"PublishStatus": "PUBLISHED",
+							"ObjectVersion": 1,
+							"ObjectId": "56760c94-4aa2-43d4-b562-ccf1fb2c0b3e"
+						},
+						"Source": {
+							"Type": "SPARK"
+						}
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CDCstaging')]",
+			"type": "Microsoft.Synapse/workspaces/databases",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"Ddls": [
+					{
+						"ActionType": "CREATE",
+						"OldEntity": null,
+						"NewEntity": {
+							"Name": "CDCstaging",
+							"EntityType": "DATABASE",
+							"Description": "Silver layer",
+							"Origin": {
+								"Type": "SPARK"
+							},
+							"Properties": {
+								"IsSyMSCDMDatabase": true
+							},
+							"Source": {
+								"Provider": "ADLS",
+								"Location": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDClanding_copy_unp",
+								"Properties": {
+									"FormatType": "parquet",
+									"LinkedServiceName": "asa-cdc-streaming-WorkspaceDefaultStorage"
+								}
+							},
+							"PublishStatus": "PUBLISHED",
+							"ObjectVersion": 1,
+							"ObjectId": "1483f022-08b7-4f8e-8763-69279521cb71"
+						},
+						"Source": {
+							"Type": "SPARK"
+						}
+					},
+					{
+						"ActionType": "CREATE",
+						"OldEntity": null,
+						"NewEntity": {
+							"Name": "CDCstaging_SCD2",
+							"EntityType": "TABLE",
+							"Namespace": {
+								"DatabaseName": "CDCstaging"
+							},
+							"Description": "",
+							"TableType": "EXTERNAL",
+							"Origin": {
+								"Type": "SPARK"
+							},
+							"StorageDescriptor": {
+								"Columns": [
+									{
+										"Name": "StockItemID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										}
+									},
+									{
+										"Name": "StockItemName",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										}
+									},
+									{
+										"Name": "SupplierID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										}
+									},
+									{
+										"Name": "ColorID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										}
+									},
+									{
+										"Name": "UnitPackageID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										}
+									},
+									{
+										"Name": "OuterPackageID",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										}
+									},
+									{
+										"Name": "Brand",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										}
+									},
+									{
+										"Name": "Size",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										}
+									},
+									{
+										"Name": "LeadTimeDays",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										}
+									},
+									{
+										"Name": "QuantityPerOuter",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										}
+									},
+									{
+										"Name": "IsChillerStock",
+										"OriginDataTypeName": {
+											"TypeName": "boolean",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "boolean"
+											}
+										}
+									},
+									{
+										"Name": "Barcode",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										}
+									},
+									{
+										"Name": "TaxRate",
+										"OriginDataTypeName": {
+											"TypeName": "decimal",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Precision": 18,
+											"Scale": 3,
+											"Properties": {
+												"HIVE_TYPE_STRING": "decimal"
+											}
+										}
+									},
+									{
+										"Name": "UnitPrice",
+										"OriginDataTypeName": {
+											"TypeName": "decimal",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Precision": 18,
+											"Scale": 2,
+											"Properties": {
+												"HIVE_TYPE_STRING": "decimal"
+											}
+										}
+									},
+									{
+										"Name": "RecommendedRetailPrice",
+										"OriginDataTypeName": {
+											"TypeName": "decimal",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Precision": 18,
+											"Scale": 2,
+											"Properties": {
+												"HIVE_TYPE_STRING": "decimal"
+											}
+										}
+									},
+									{
+										"Name": "TypicalWeightPerUnit",
+										"OriginDataTypeName": {
+											"TypeName": "decimal",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Precision": 18,
+											"Scale": 3,
+											"Properties": {
+												"HIVE_TYPE_STRING": "decimal"
+											}
+										}
+									},
+									{
+										"Name": "MarketingComments",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										}
+									},
+									{
+										"Name": "InternalComments",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										}
+									},
+									{
+										"Name": "Photo",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										}
+									},
+									{
+										"Name": "CustomFields",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										}
+									},
+									{
+										"Name": "Tags",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										}
+									},
+									{
+										"Name": "SearchDetails",
+										"OriginDataTypeName": {
+											"TypeName": "string",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Length": 8000,
+											"Properties": {
+												"HIVE_TYPE_STRING": "string"
+											}
+										}
+									},
+									{
+										"Name": "LastEditedBy",
+										"OriginDataTypeName": {
+											"TypeName": "integer",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "integer"
+											}
+										}
+									},
+									{
+										"Name": "CurrentFlag",
+										"OriginDataTypeName": {
+											"TypeName": "binary",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"HIVE_TYPE_STRING": "binary"
+											}
+										}
+									},
+									{
+										"Name": "EffDateFrom",
+										"OriginDataTypeName": {
+											"TypeName": "timestamp",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"TimestampFormat": "YYYY-MM-DD HH:MM:SS.fffffffff",
+												"HIVE_TYPE_STRING": "timestamp"
+											}
+										}
+									},
+									{
+										"Name": "EffDateTo",
+										"OriginDataTypeName": {
+											"TypeName": "timestamp",
+											"IsComplexType": false,
+											"IsNullable": true,
+											"Properties": {
+												"TimestampFormat": "YYYY-MM-DD HH:MM:SS.fffffffff",
+												"HIVE_TYPE_STRING": "timestamp"
+											}
+										}
+									}
+								],
+								"Format": {
+									"InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+									"OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+									"FormatType": "parquet",
+									"SerializeLib": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+									"Properties": {
+										"path": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDCstaging/CDCstaging_SCD2",
+										"FormatTypeSetToDatabaseDefault": false
+									}
+								},
+								"Source": {
+									"Provider": "ADLS",
+									"Location": "abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/CDCstaging/CDCstaging_SCD2",
+									"Properties": {
+										"LinkedServiceName": "asa-cdc-streaming-WorkspaceDefaultStorage",
+										"LocationSetToDatabaseDefault": false
+									}
+								},
+								"Properties": {
+									"textinputformat.record.delimiter": ",",
+									"compression": "{\"type\":\"Snappy\",\"level\":\"optimal\"}",
+									"derivedModelAttributeInfo": "{\"attributeReferences\":{}}"
+								},
+								"Compressed": false,
+								"IsStoredAsSubdirectories": false
+							},
+							"Properties": {
+								"Description": "",
+								"DisplayFolderInfo": "{\"name\":\"Others\",\"colorCode\":\"\"}",
+								"PrimaryKeys": "",
+								"spark.sql.sources.provider": "parquet"
+							},
+							"Retention": 0,
+							"Temporary": false,
+							"IsRewriteEnabled": false
+						},
+						"Source": {
+							"Type": "SPARK"
+						}
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/cdcsparkpool')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": 15
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": 3,
+					"minNodeCount": 3
+				},
+				"nodeCount": 10,
+				"nodeSize": "Small",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "3.3",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": false,
+				"customLibraries": [],
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		}
+	]
+}

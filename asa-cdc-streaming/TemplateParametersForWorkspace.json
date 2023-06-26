@@ -1,0 +1,18 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"value": "asa-cdc-streaming"
+		},
+		"asa-cdc-streaming-WorkspaceDefaultSqlServer_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:asa-cdc-streaming.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"asa-cdc-streaming-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"value": "https://dlcdcstreaming.dfs.core.windows.net"
+		},
+		"cdcstreamingkv_properties_typeProperties_baseUrl": {
+			"value": "https://cdc-streaming-kv.vault.azure.net/"
+		}
+	}
+}
