@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "5e00a4ca-f24b-4523-a649-fd0db9bb4376"
+				"spark.autotune.trackingId": "af2e53a5-01c9-4e69-8097-3aefdd39c1a8"
 			}
 		},
 		"metadata": {
@@ -563,46 +563,6 @@
 					"print(CDC_query.exception())"
 				],
 				"execution_count": 16
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"pq_path = f\"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/{type_of_data}/output/year=*/month=*/day=*/hour=*/*.parquet\"\r\n",
-					"\r\n",
-					"df_pq = spark.read.format(\"parquet\").load(pq_path)\r\n",
-					"\r\n",
-					"df_pq.write.mode(\"append\").saveAsTable(f\"CDClanding.{type_of_data}_updates\")"
-				],
-				"execution_count": 18
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					""
-				],
-				"execution_count": null
 			}
 		]
 	}
