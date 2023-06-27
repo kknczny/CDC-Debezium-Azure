@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "b4779f8b-df75-4879-8432-c8bf2dd45ff6"
+				"spark.autotune.trackingId": "54bcfe43-f1d5-4fd9-a5ee-d17140873d21"
 			}
 		},
 		"metadata": {
@@ -62,11 +62,12 @@
 					}
 				},
 				"source": [
+					"import delta\r\n",
 					"import json\r\n",
 					"from pyspark.sql.functions import *\r\n",
 					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType, TimestampType, DecimalType"
 				],
-				"execution_count": 3
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
@@ -82,7 +83,8 @@
 					"object_schema = type_of_data\r\n",
 					"\r\n",
 					"checkpoint_loc = f\"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/{type_of_data}/checkpoint/\"\r\n",
-					"output_loc = f\"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/{type_of_data}/output/\"\r\n",
+					"landing_loc = f\"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/landing/{type_of_data}/output/\"\r\n",
+					"staging_loc = f\"abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/staging/{type_of_data}/\"\r\n",
 					"\r\n",
 					"# Create the starting position Dictionary\r\n",
 					"startingEventPosition = {\r\n",
@@ -101,7 +103,7 @@
 					"\r\n",
 					"ehConf[\"eventhubs.connectionString\"] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionStringEntity)"
 				],
-				"execution_count": 4
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -208,7 +210,7 @@
 					"                (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
 					"        )"
 				],
-				"execution_count": 16
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -273,7 +275,7 @@
 					"}\r\n",
 					"    "
 				],
-				"execution_count": 49
+				"execution_count": 38
 			},
 			{
 				"cell_type": "code",
@@ -318,7 +320,7 @@
 					"# print(\"-----\")\r\n",
 					"# df_raw.printSchema()"
 				],
-				"execution_count": 6
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -336,12 +338,13 @@
 				"source": [
 					"cdc_schema = get_cdc_schema(object_schema)\r\n",
 					"\r\n",
-					"if inner_struct_fields:\r\n",
-					"    inner_struct_fields.clear()\r\n",
-					"    \r\n",
-					"inner_struct_fields = INNER_SCHEMA_MAP[object_schema]"
+					"# if inner_struct_fields:\r\n",
+					"#     inner_struct_fields.clear()\r\n",
+					"\r\n",
+					"inner_struct_fields = INNER_SCHEMA_MAP[object_schema]\r\n",
+					"inner_struct_fields"
 				],
-				"execution_count": 45
+				"execution_count": 39
 			},
 			{
 				"cell_type": "code",
@@ -393,49 +396,32 @@
 					"    StructField(\"payload\", StructType(outer_struct_fields), nullable=True)\r\n",
 					"])"
 				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_deserialized = deserialize_cdc_msg(df_raw, cdc_schema, root_schema)\r\n",
+					"df_deserialized.printSchema()"
+				],
 				"execution_count": 8
 			},
 			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"df_deserialized = deserialize_cdc_msg(df_raw, cdc_schema, root_schema)"
-				],
-				"execution_count": 9
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					}
-				},
-				"source": [
-					"df_deserialized.printSchema()"
-				],
-				"execution_count": 10
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
+						"source_hidden": true,
 						"outputs_hidden": false
 					},
 					"nteract": {
@@ -450,16 +436,16 @@
 					"# \t\t\t\t.format(\"json\") \\\r\n",
 					"# \t\t\t\t.outputMode(\"append\")   \\\r\n",
 					"# \t\t\t\t.option(\"checkpointLocation\", checkpoint_loc)   \\\r\n",
-					"# \t\t\t\t.option(\"path\", output_loc)    \\\r\n",
+					"# \t\t\t\t.option(\"path\", landing_loc)    \\\r\n",
 					"# \t\t\t\t.start()"
 				],
-				"execution_count": 11
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
-						"source_hidden": false,
+						"source_hidden": true,
 						"outputs_hidden": false
 					},
 					"nteract": {
@@ -471,13 +457,13 @@
 				"source": [
 					"# query_test.stop()"
 				],
-				"execution_count": 12
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
-						"source_hidden": false,
+						"source_hidden": true,
 						"outputs_hidden": false
 					},
 					"nteract": {
@@ -493,13 +479,13 @@
 					"# print(\"-----\")\r\n",
 					"# print(query_test.exception())"
 				],
-				"execution_count": 13
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
-						"source_hidden": false,
+						"source_hidden": true,
 						"outputs_hidden": false
 					},
 					"nteract": {
@@ -511,7 +497,7 @@
 				"source": [
 					"# CDC_query.stop()"
 				],
-				"execution_count": 14
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -530,21 +516,21 @@
 					"# Streaming Query in scheduler pool\r\n",
 					"spark.sparkContext.setLocalProperty(\"spark.scheduler.pool\", \"pool0\")\r\n",
 					"\r\n",
-					"CDC_query = df_deserialized \\\r\n",
+					"CDCquery = df_deserialized \\\r\n",
 					"    .withColumn(\"year\", year(\"ts\"))   \\\r\n",
 					"    .withColumn(\"month\", month(\"ts\"))   \\\r\n",
 					"    .withColumn(\"day\", dayofmonth(\"ts\"))   \\\r\n",
 					"    .withColumn(\"hour\", hour(\"ts\"))   \\\r\n",
 					"    .writeStream    \\\r\n",
-					"    .queryName(\"CDC_query\") \\\r\n",
-					"    .format(\"parquet\")  \\\r\n",
+					"    .queryName(\"CDCquery\") \\\r\n",
+					"    .format(\"delta\")  \\\r\n",
 					"    .partitionBy(\"year\", \"month\", \"day\", \"hour\")    \\\r\n",
 					"    .outputMode(\"append\")   \\\r\n",
 					"    .option(\"checkpointLocation\", checkpoint_loc)   \\\r\n",
-					"    .option(\"path\", output_loc)    \\\r\n",
+					"    .option(\"path\", landing_loc)    \\\r\n",
 					"    .start()"
 				],
-				"execution_count": 15
+				"execution_count": 9
 			},
 			{
 				"cell_type": "code",
@@ -562,11 +548,11 @@
 				"source": [
 					"# Check the status of query\r\n",
 					"\r\n",
-					"print(CDC_query.isActive)\r\n",
+					"print(CDCquery.isActive)\r\n",
 					"print(\"-----\")\r\n",
-					"print(CDC_query.exception())"
+					"print(CDCquery.exception())"
 				],
-				"execution_count": 16
+				"execution_count": 40
 			},
 			{
 				"cell_type": "code",
@@ -582,9 +568,12 @@
 					}
 				},
 				"source": [
-					"inner_struct_fields"
+					"raw_path = f\"{landing_loc}year=*/month=*/day=*/hour=*/*.parquet\"\r\n",
+					"df_updates = spark.read.format(\"parquet\").load(raw_path)\r\n",
+					"df_updates.write.mode(\"append\").saveAsTable(\"StockItems_updates\")\r\n",
+					"df_updates.createOrReplaceTempView(\"StockItems_updates\")"
 				],
-				"execution_count": 46
+				"execution_count": 84
 			},
 			{
 				"cell_type": "code",
@@ -600,29 +589,18 @@
 					}
 				},
 				"source": [
-					"raw_pq_path = f\"{output_loc}year=*/month=*/day=*/hour=*/*.parquet\"\r\n",
+					"# # Initial load to staging\r\n",
 					"\r\n",
-					"df_updates = spark.read.format(\"parquet\").load(raw_pq_path)\r\n",
+					"# df_staging = df_updates \\\r\n",
+					"#             .withColumn(\"CurrentFlag\", lit(1))   \\\r\n",
+					"#             .withColumn(\"EffDateFrom\", lit(current_timestamp())) \\\r\n",
+					"#             .withColumn(\"EffDateTo\", lit(None).cast(TimestampType()))   \\\r\n",
+					"#             .drop(\"op\", \"ValidFrom\", \"ValidTo\")\r\n",
 					"\r\n",
-					"df_updates.write.mode(\"append\").saveAsTable(f\"{type_of_data}_updates\")\r\n",
-					"\r\n",
-					"df_updates.createOrReplaceTempView(\"StockItems_updates\")\r\n",
-					"\r\n",
-					"inner_struct_fields = INNER_SCHEMA_MAP[object_schema]\r\n",
-					"\r\n",
-					"SCDschema =  StructType(inner_struct_fields)   \\\r\n",
-					"                .add(\"CurrentFlag\", BooleanType())  \\\r\n",
-					"                .add(\"EffDateFrom\", TimestampType())    \\\r\n",
-					"                .add(\"EffDateTo\", TimestampType()) \r\n",
-					"\r\n",
-					"df_scd2 = spark.createDataFrame([], SCDschema)\r\n",
-					"df_scd2 = df_scd2.drop(\"ValidFrom\", \"ValidTo\")\r\n",
-					"\r\n",
-					"df_scd2.printSchema()\r\n",
-					"\r\n",
-					"df_scd2.createOrReplaceTempView(\"StockItems_SCD2\")"
+					"# df_staging.write.format(\"delta\").mode(\"overwrite\").option(\"overwriteSchema\", \"true\").save(staging_loc)\r\n",
+					""
 				],
-				"execution_count": 51
+				"execution_count": 80
 			},
 			{
 				"cell_type": "code",
@@ -638,14 +616,55 @@
 					},
 					"microsoft": {
 						"language": "sparksql"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql\r\n",
+					"-- -- Initial staging table creation\r\n",
+					"\r\n",
+					"-- -- DROP TABLE IF EXISTS StockItems_SCD2\r\n",
+					"\r\n",
+					"-- CREATE TABLE StockItems_SCD2 USING delta\r\n",
+					"-- LOCATION 'abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/staging/stock/'"
+				],
+				"execution_count": 82
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
 					}
+				},
+				"source": [
+					"**Clean the landing directory not to overwrite with merge**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
 				},
 				"source": [
 					"%%sql\r\n",
 					"\r\n",
 					"MERGE INTO StockItems_SCD2 AS tgt\r\n",
 					"USING\r\n",
-					"-- Query to return staged customer data\r\n",
 					"(\r\n",
 					"    SELECT     \r\n",
 					"    StockItemID,\r\n",
@@ -731,15 +750,11 @@
 					"    SearchDetails,\r\n",
 					"    LastEditedBy,\r\n",
 					"    1,\r\n",
-					"    -- ValidFrom,    --getdate()\r\n",
-					"    -- CAST(getdate() AS BIGINT),\r\n",
 					"    CURRENT_TIMESTAMP(),\r\n",
 					"    NULL\r\n",
-					"    )\r\n",
-					"    -- )\r\n",
-					"    ;"
+					"    );"
 				],
-				"execution_count": 52
+				"execution_count": 85
 			},
 			{
 				"cell_type": "code",
@@ -752,12 +767,18 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
 				},
 				"source": [
-					""
+					"%%sql\r\n",
+					"\r\n",
+					"select * from stockitems_scd2"
 				],
-				"execution_count": null
+				"execution_count": 78
 			}
 		]
 	}
