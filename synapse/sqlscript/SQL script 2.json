@@ -1,0 +1,17 @@
+{
+	"name": "SQL script 2",
+	"properties": {
+		"content": {
+			"query": "SELECT [op]\n,[StockItemID]\n,[StockItemName]\n,[SupplierID]\n,[ColorID]\n,[UnitPackageID]\n,[OuterPackageID]\n,[Brand]\n,[Size]\n,[LeadTimeDays]\n,[QuantityPerOuter]\n,[IsChillerStock]\n,[Barcode]\n,[TaxRate]\n,[UnitPrice]\n,[RecommendedRetailPrice]\n,[TypicalWeightPerUnit]\n,[MarketingComments]\n,[InternalComments]\n,[Photo]\n,[CustomFields]\n,[Tags]\n,[SearchDetails]\n,[LastEditedBy]\n,[ValidFrom]\n,[ValidTo]\n,[ts]\n FROM [default].[dbo].[stockitems_updates]",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "default",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
