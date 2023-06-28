@@ -1,5 +1,5 @@
 {
-	"name": "SQL script 4",
+	"name": "staging_folder_querying",
 	"properties": {
 		"content": {
 			"query": "-- This is auto-generated code\nSELECT *\nFROM\n    OPENROWSET(\n        BULK 'https://dlcdcstreaming.dfs.core.windows.net/dlcdcstreaming/staging/stock/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",

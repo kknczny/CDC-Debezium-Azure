@@ -1,8 +1,8 @@
 {
-	"name": "SQL script 3",
+	"name": "landing_folder_querying",
 	"properties": {
 		"content": {
-			"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'https://dlcdcstreaming.dfs.core.windows.net/dlcdcstreaming/landing/stock/output/year=2023/month=6/day=27/hour=14/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\n",
+			"query": "-- This is auto-generated code\nSELECT\n *\nFROM\n    OPENROWSET(\n        BULK 'https://dlcdcstreaming.dfs.core.windows.net/dlcdcstreaming/landing/stock/output/year=*/month=*/day=*/hour=*/**',\n        FORMAT = 'PARQUET'\n    ) AS [result]\norder by ts DESC",
 			"metadata": {
 				"language": "sql"
 			},

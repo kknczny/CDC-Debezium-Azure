@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "f0790166-5bf6-4ceb-a199-bf053b4fad48"
+				"spark.autotune.trackingId": "0bf8ea64-3578-411b-9a5b-598afa402da5"
 			}
 		},
 		"metadata": {
@@ -67,7 +67,7 @@
 					"from pyspark.sql.functions import *\r\n",
 					"from pyspark.sql.types import StructType, StructField, StringType, LongType, IntegerType, FloatType, BooleanType, TimestampType, DecimalType"
 				],
-				"execution_count": 1
+				"execution_count": 65
 			},
 			{
 				"cell_type": "code",
@@ -103,7 +103,7 @@
 					"\r\n",
 					"ehConf[\"eventhubs.connectionString\"] = sc._jvm.org.apache.spark.eventhubs.EventHubsUtils.encrypt(connectionStringEntity)"
 				],
-				"execution_count": 2
+				"execution_count": 66
 			},
 			{
 				"cell_type": "code",
@@ -210,7 +210,7 @@
 					"                (col('value.ts_ms') / 1000).cast(TimestampType()).alias('ts'))\r\n",
 					"        )"
 				],
-				"execution_count": 3
+				"execution_count": 68
 			},
 			{
 				"cell_type": "code",
@@ -275,7 +275,7 @@
 					"}\r\n",
 					"    "
 				],
-				"execution_count": 38
+				"execution_count": 69
 			},
 			{
 				"cell_type": "code",
@@ -299,7 +299,7 @@
 					"\r\n",
 					"# df_parsed = df_raw.withColumn(\"parsed\", col(\"body\").cast(\"string\"))"
 				],
-				"execution_count": 5
+				"execution_count": 70
 			},
 			{
 				"cell_type": "code",
@@ -344,7 +344,7 @@
 					"inner_struct_fields = INNER_SCHEMA_MAP[object_schema]\r\n",
 					"inner_struct_fields"
 				],
-				"execution_count": 39
+				"execution_count": 71
 			},
 			{
 				"cell_type": "code",
@@ -396,7 +396,7 @@
 					"    StructField(\"payload\", StructType(outer_struct_fields), nullable=True)\r\n",
 					"])"
 				],
-				"execution_count": 7
+				"execution_count": 72
 			},
 			{
 				"cell_type": "code",
@@ -415,7 +415,7 @@
 					"df_deserialized = deserialize_cdc_msg(df_raw, cdc_schema, root_schema)\r\n",
 					"df_deserialized.printSchema()"
 				],
-				"execution_count": 8
+				"execution_count": 73
 			},
 			{
 				"cell_type": "code",
@@ -485,7 +485,7 @@
 				"cell_type": "code",
 				"metadata": {
 					"jupyter": {
-						"source_hidden": true,
+						"source_hidden": false,
 						"outputs_hidden": false
 					},
 					"nteract": {
@@ -495,9 +495,9 @@
 					}
 				},
 				"source": [
-					"# CDC_query.stop()"
+					"CDCquery.stop()"
 				],
-				"execution_count": null
+				"execution_count": 102
 			},
 			{
 				"cell_type": "code",
@@ -530,7 +530,7 @@
 					"    .option(\"path\", landing_loc)    \\\r\n",
 					"    .start()"
 				],
-				"execution_count": 9
+				"execution_count": 103
 			},
 			{
 				"cell_type": "code",
@@ -552,7 +552,7 @@
 					"print(\"-----\")\r\n",
 					"print(CDCquery.exception())"
 				],
-				"execution_count": 40
+				"execution_count": 104
 			},
 			{
 				"cell_type": "code",
@@ -565,18 +565,25 @@
 						"transient": {
 							"deleting": false
 						}
-					},
-					"microsoft": {
-						"language": "sparksql"
-					},
-					"collapsed": false
+					}
 				},
 				"source": [
-					"%%sql \r\n",
-					"DROP TABLE StockItems_updates\r\n",
-					"-- Also delete all files in landing directory before merging new updates not to cause overwriting in SCD2 table"
+					"def get_latest_records(df, id_col, ts_col):\r\n",
+					"    latest_records = df.groupBy(id_col).agg(max(ts_col).alias(f\"max_{ts_col}\"))\r\n",
+					"    result = df.join(latest_records, (df.StockItemID == latest_records.StockItemID) & (df.ts == latest_records.max_ts), \"inner\")\r\n",
+					"    result = result.select(df['*'])\r\n",
+					"    return result\r\n",
+					"\r\n",
+					"def add_checksum(df):\r\n",
+					"    # Create a checksum of all fields without timestamp and opeartion type\r\n",
+					"    cols = df.columns\r\n",
+					"    non_checksum = ['ts','op']\r\n",
+					"    for item in non_checksum:\r\n",
+					"        cols.remove(item)\r\n",
+					"    df_checksum = df.withColumn(\"checksum\", md5(concat_ws(\"\", *cols)))\r\n",
+					"    return df_checksum"
 				],
-				"execution_count": 124
+				"execution_count": 98
 			},
 			{
 				"cell_type": "code",
@@ -593,15 +600,16 @@
 				},
 				"source": [
 					"raw_path = f\"{landing_loc}year=*/month=*/day=*/hour=*/*.parquet\"\r\n",
-					"df_updates = spark.read.format(\"parquet\").load(raw_path)\r\n",
+					"df_init = spark.read.format(\"parquet\").load(raw_path)\r\n",
 					"\r\n",
-					"df_updates_cols = df_updates.columns\r\n",
-					"df_updates = df_updates.withColumn(\"checksum\", md5(concat_ws(\"\", *df_updates_cols)))\r\n",
-					"# df_updates.show()\r\n",
-					"df_updates.write.mode(\"append\").saveAsTable(\"StockItems_updates\")\r\n",
-					"# df_updates.createOrReplaceTempView(\"StockItems_updates\")"
+					"df_init = get_latest_records(df_init,id_col='StockItemID',ts_col='ts')\r\n",
+					"df_init = add_checksum(df_init)\r\n",
+					"\r\n",
+					"# df_init.show()\r\n",
+					"df_init.write.mode(\"append\").saveAsTable(\"StockItems_init\")\r\n",
+					"# df_init.createOrReplaceTempView(\"StockItems_init\")"
 				],
-				"execution_count": 125
+				"execution_count": 105
 			},
 			{
 				"cell_type": "code",
@@ -618,19 +626,16 @@
 				},
 				"source": [
 					"# Initial load to staging\r\n",
-					"df_staging_cols = df_staging.columns\r\n",
-					"\r\n",
-					"df_staging = df_updates \\\r\n",
+					"df_staging = df_init \\\r\n",
 					"            .withColumn(\"CurrentFlag\", lit(1))   \\\r\n",
 					"            .withColumn(\"EffDateFrom\", lit(current_timestamp())) \\\r\n",
 					"            .withColumn(\"EffDateTo\", lit(None).cast(TimestampType()))   \\\r\n",
-					"            .withColumn(\"checksum\", md5(concat_ws(\"\", *df_staging_cols)))   \\\r\n",
 					"            .drop(\"op\", \"ValidFrom\", \"ValidTo\")\r\n",
 					"\r\n",
 					"df_staging.write.format(\"delta\").mode(\"overwrite\").option(\"overwriteSchema\", \"true\").save(staging_loc)\r\n",
 					""
 				],
-				"execution_count": 80
+				"execution_count": 106
 			},
 			{
 				"cell_type": "code",
@@ -653,12 +658,64 @@
 					"%%sql\r\n",
 					"-- Initial staging table creation\r\n",
 					"\r\n",
-					"DROP TABLE IF EXISTS StockItems_SCD2\r\n",
+					"-- DROP TABLE IF EXISTS StockItems_SCD2\r\n",
 					"\r\n",
-					"-- CREATE TABLE StockItems_SCD2 USING delta\r\n",
-					"-- LOCATION 'abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/staging/stock/'"
+					"CREATE TABLE StockItems_SCD2 USING delta\r\n",
+					"LOCATION 'abfss://dlcdcstreaming@dlcdcstreaming.dfs.core.windows.net/staging/stock/'"
 				],
-				"execution_count": 82
+				"execution_count": 109
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql \r\n",
+					"DROP TABLE IF EXISTS StockItems_updates"
+				],
+				"execution_count": 110
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"raw_path = f\"{landing_loc}year=*/month=*/day=*/hour=*/*.parquet\"\r\n",
+					"# Before running delete all files in landing directory before merging new updates not to cause overwriting in SCD2 table during merge\r\n",
+					"\r\n",
+					"df_updates = spark.read.format(\"parquet\").load(raw_path)\r\n",
+					"\r\n",
+					"# Obtain only latest state for specific id and latest timestamp\r\n",
+					"df_updates = get_latest_records(df_updates, id_col='StockItemID', ts_col='ts')\r\n",
+					"\r\n",
+					"# Create a checksum of all fields without timestamp and opeartion type\r\n",
+					"df_updates = add_checksum(df_updates)\r\n",
+					"\r\n",
+					"df_updates.write.mode(\"append\").saveAsTable(\"StockItems_updates\")"
+				],
+				"execution_count": 101
 			},
 			{
 				"cell_type": "code",
@@ -681,28 +738,6 @@
 					"%%sql\r\n",
 					"-- -- RESTORE TO ORIGINAL VERSION BEFORE REFLECTING UPDATES\r\n",
 					"-- RESTORE TABLE StockItems_SCD2 TO VERSION AS OF 0"
-				],
-				"execution_count": 116
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"microsoft": {
-						"language": "sparksql"
-					}
-				},
-				"source": [
-					"%%sql\r\n",
-					"ALTER TABLE stockitems_scd2 ADD COLUMNS (checksum)"
 				],
 				"execution_count": null
 			},
@@ -727,16 +762,18 @@
 					"%%sql\r\n",
 					"-- First step:\r\n",
 					"-- Insert updated records by comparing checksum. The obsolete records will be marked as CurrentFlag=0 in the next step\r\n",
+					"-- If there is a delete row, it is intserted \r\n",
 					"\r\n",
 					"INSERT INTO StockItems_SCD2\r\n",
 					"    -- (StockItemID,StockItemName,SupplierID,ColorID,UnitPackageID,OuterPackageID,Brand,Size,LeadTimeDays,QuantityPerOuter,IsChillerStock,Barcode,TaxRate,UnitPrice,\r\n",
 					"    -- RecommendedRetailPrice,TypicalWeightPerUnit,MarketingComments,InternalComments,Photo,CustomFields,Tags,SearchDetails,LastEditedBy,CurrentFlag,EffDateFrom,EffDateTo)\r\n",
-					"SELECT StockItemID,StockItemName,SupplierID,ColorID,UnitPackageID,OuterPackageID,Brand,Size,LeadTimeDays,QuantityPerOuter,IsChillerStock,Barcode,TaxRate,UnitPrice,\r\n",
-					"    RecommendedRetailPrice,TypicalWeightPerUnit,MarketingComments,InternalComments,Photo,CustomFields,Tags,SearchDetails,LastEditedBy,1,CURRENT_TIMESTAMP(),'9999-12-31',checksum\r\n",
+					"SELECT src.StockItemID,src.StockItemName,src.SupplierID,src.ColorID,src.UnitPackageID,src.OuterPackageID,src.Brand,src.Size,src.LeadTimeDays,src.QuantityPerOuter,src.IsChillerStock,src.Barcode,src.TaxRate,src.UnitPrice,\r\n",
+					"    src.RecommendedRetailPrice,src.TypicalWeightPerUnit,src.MarketingComments,src.InternalComments,src.Photo,src.CustomFields,src.Tags,src.SearchDetails,src.LastEditedBy,src.ts,1,CURRENT_TIMESTAMP(),\r\n",
+					"    CASE WHEN (src.op='d') then CURRENT_TIMESTAMP() ELSE '9999-12-31' END,src.checksum\r\n",
 					"FROM StockItems_updates src\r\n",
 					"    JOIN StockItems_SCD2 tgt \r\n",
 					"    ON src.StockItemID = tgt.StockItemID\r\n",
-					"    WHERE (src.checksum <> tgt.checksum) AND tgt.CurrentFlag=1\r\n",
+					"    WHERE (src.checksum <> tgt.checksum) AND tgt.CurrentFlag=1;\r\n",
 					"\r\n",
 					"-- Second step:\r\n",
 					"-- Merge other updates with SCD2 table\r\n",
@@ -763,7 +800,7 @@
 					"    (StockItemID,StockItemName,SupplierID,ColorID,UnitPackageID,OuterPackageID,Brand,Size,LeadTimeDays,QuantityPerOuter,IsChillerStock,Barcode,TaxRate,UnitPrice,\r\n",
 					"    RecommendedRetailPrice,TypicalWeightPerUnit,MarketingComments,InternalComments,Photo,CustomFields,Tags,SearchDetails,LastEditedBy,checksum,1,CURRENT_TIMESTAMP(),'9999-12-31',checksum);"
 				],
-				"execution_count": 115
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -788,10 +825,10 @@
 					"select currentflag, * from stockitems_scd2\r\n",
 					"WHERE StockItemID in \r\n",
 					"    -- (select distinct stockitemid from stockitems_scd2 where CurrentFlag = 0)\r\n",
-					"    (162, 42, 999)\r\n",
+					"    (42, 999)\r\n",
 					"order by stockitemid asc, currentflag desc"
 				],
-				"execution_count": 129
+				"execution_count": 111
 			}
 		]
 	}

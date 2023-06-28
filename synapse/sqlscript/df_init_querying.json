@@ -1,8 +1,8 @@
 {
-	"name": "stockitems_updates_querying",
+	"name": "df_init_querying",
 	"properties": {
 		"content": {
-			"query": "SELECT *\n FROM [default].[dbo].[stockitems_updates]\n ",
+			"query": "SELECT *\n FROM [default].[dbo].[stockitems_init]\n order by ts DESC",
 			"metadata": {
 				"language": "sql"
 			},
