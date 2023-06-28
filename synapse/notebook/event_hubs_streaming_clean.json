@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "0bf8ea64-3578-411b-9a5b-598afa402da5"
+				"spark.autotune.trackingId": "dbcfaad7-eddd-4c88-b40b-4037d19df41f"
 			}
 		},
 		"metadata": {
@@ -715,7 +715,7 @@
 					"\r\n",
 					"df_updates.write.mode(\"append\").saveAsTable(\"StockItems_updates\")"
 				],
-				"execution_count": 101
+				"execution_count": 113
 			},
 			{
 				"cell_type": "code",
@@ -769,7 +769,7 @@
 					"    -- RecommendedRetailPrice,TypicalWeightPerUnit,MarketingComments,InternalComments,Photo,CustomFields,Tags,SearchDetails,LastEditedBy,CurrentFlag,EffDateFrom,EffDateTo)\r\n",
 					"SELECT src.StockItemID,src.StockItemName,src.SupplierID,src.ColorID,src.UnitPackageID,src.OuterPackageID,src.Brand,src.Size,src.LeadTimeDays,src.QuantityPerOuter,src.IsChillerStock,src.Barcode,src.TaxRate,src.UnitPrice,\r\n",
 					"    src.RecommendedRetailPrice,src.TypicalWeightPerUnit,src.MarketingComments,src.InternalComments,src.Photo,src.CustomFields,src.Tags,src.SearchDetails,src.LastEditedBy,src.ts,1,CURRENT_TIMESTAMP(),\r\n",
-					"    CASE WHEN (src.op='d') then CURRENT_TIMESTAMP() ELSE '9999-12-31' END,src.checksum\r\n",
+					"    CASE WHEN (src.op='d') then CURRENT_TIMESTAMP() ELSE make_timestamp(9999, 12, 31, 00, 00, 00) END,src.checksum\r\n",
 					"FROM StockItems_updates src\r\n",
 					"    JOIN StockItems_SCD2 tgt \r\n",
 					"    ON src.StockItemID = tgt.StockItemID\r\n",
@@ -798,9 +798,9 @@
 					"    RecommendedRetailPrice,TypicalWeightPerUnit,MarketingComments,InternalComments,Photo,CustomFields,Tags,SearchDetails,LastEditedBy,checksum,CurrentFlag,EffDateFrom,EffDateTo,checksum)\r\n",
 					"    VALUES \r\n",
 					"    (StockItemID,StockItemName,SupplierID,ColorID,UnitPackageID,OuterPackageID,Brand,Size,LeadTimeDays,QuantityPerOuter,IsChillerStock,Barcode,TaxRate,UnitPrice,\r\n",
-					"    RecommendedRetailPrice,TypicalWeightPerUnit,MarketingComments,InternalComments,Photo,CustomFields,Tags,SearchDetails,LastEditedBy,checksum,1,CURRENT_TIMESTAMP(),'9999-12-31',checksum);"
+					"    RecommendedRetailPrice,TypicalWeightPerUnit,MarketingComments,InternalComments,Photo,CustomFields,Tags,SearchDetails,LastEditedBy,checksum,1,CURRENT_TIMESTAMP(),make_timestamp(9999, 12, 31, 00, 00, 00),checksum);"
 				],
-				"execution_count": null
+				"execution_count": 129
 			},
 			{
 				"cell_type": "code",
@@ -825,10 +825,28 @@
 					"select currentflag, * from stockitems_scd2\r\n",
 					"WHERE StockItemID in \r\n",
 					"    -- (select distinct stockitemid from stockitems_scd2 where CurrentFlag = 0)\r\n",
-					"    (42, 999)\r\n",
+					"    (53, 999)\r\n",
 					"order by stockitemid asc, currentflag desc"
 				],
-				"execution_count": 111
+				"execution_count": 128
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					""
+				],
+				"execution_count": null
 			}
 		]
 	}
