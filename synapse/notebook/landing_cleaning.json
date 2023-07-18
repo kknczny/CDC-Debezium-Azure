@@ -3,6 +3,10 @@
 	"properties": {
 		"nbformat": 4,
 		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "cdcsparkpool",
+			"type": "BigDataPoolReference"
+		},
 		"sessionProperties": {
 			"driverMemory": "28g",
 			"driverCores": 4,
@@ -13,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "a3407232-3258-43a7-8f8f-c6c128fe9bfc"
+				"spark.autotune.trackingId": "06ab323a-ade4-43f0-913c-c2e84e5c01f1"
 			}
 		},
 		"metadata": {
@@ -21,10 +25,25 @@
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
-				"display_name": "python"
+				"display_name": "Synapse PySpark"
 			},
 			"language_info": {
 				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/91b6e3ed-6c42-4e7a-8ed3-57f49a2a42ba/resourceGroups/SB_RelDB_CDC_Streaming/providers/Microsoft.Synapse/workspaces/asa-cdc-streaming/bigDataPools/cdcsparkpool",
+				"name": "cdcsparkpool",
+				"type": "Spark",
+				"endpoint": "https://asa-cdc-streaming.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/cdcsparkpool",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 10,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -44,20 +63,18 @@
 					"    blob_list = container_client.list_blobs()\r\n",
 					"    \r\n",
 					"    for blob in blob_list:\r\n",
-					"        # Azure Synapse uses a specific path format for time partitioning.\r\n",
-					"        # We'll take advantage of this to locate the date in the blob's name.\r\n",
 					"        _, year, month, day, hour, _ = blob.name.split('/', 5)\r\n",
 					"\r\n",
 					"        blob_date_time = datetime.datetime(int(year), int(month), int(day), int(hour), tzinfo=datetime.timezone.utc)\r\n",
 					"\r\n",
-					"        # If the blob is older than 1 month, delete it.\r\n",
+					"        # Delete blobs older than 1 month\r\n",
 					"        if current_date_time - blob_date_time > datetime.timedelta(days=30):\r\n",
 					"            print(f\"Deleting blob: {blob.name}\")\r\n",
 					"            blob_client = blob_service_client.get_blob_client(container_name, blob.name)\r\n",
 					"            blob_client.delete_blob()\r\n",
 					""
 				],
-				"execution_count": null
+				"execution_count": 1
 			},
 			{
 				"cell_type": "code",
