@@ -1,0 +1,85 @@
+{
+	"name": "landing_cleaning",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "a3407232-3258-43a7-8f8f-c6c128fe9bfc"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "python"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"import datetime\r\n",
+					"from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient\r\n",
+					"from azure.identity import DefaultAzureCredential\r\n",
+					"\r\n",
+					"def clean_old_blobs(storage_account_url, container_name):\r\n",
+					"    current_date_time = datetime.datetime.now(tz=datetime.timezone.utc)\r\n",
+					"    credential = DefaultAzureCredential()\r\n",
+					"    blob_service_client = BlobServiceClient(account_url=storage_account_url, credential=credential)\r\n",
+					"    container_client = blob_service_client.get_container_client(container_name)\r\n",
+					"    blob_list = container_client.list_blobs()\r\n",
+					"    \r\n",
+					"    for blob in blob_list:\r\n",
+					"        # Azure Synapse uses a specific path format for time partitioning.\r\n",
+					"        # We'll take advantage of this to locate the date in the blob's name.\r\n",
+					"        _, year, month, day, hour, _ = blob.name.split('/', 5)\r\n",
+					"\r\n",
+					"        blob_date_time = datetime.datetime(int(year), int(month), int(day), int(hour), tzinfo=datetime.timezone.utc)\r\n",
+					"\r\n",
+					"        # If the blob is older than 1 month, delete it.\r\n",
+					"        if current_date_time - blob_date_time > datetime.timedelta(days=30):\r\n",
+					"            print(f\"Deleting blob: {blob.name}\")\r\n",
+					"            blob_client = blob_service_client.get_blob_client(container_name, blob.name)\r\n",
+					"            blob_client.delete_blob()\r\n",
+					""
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"STORAGE_ACCOUNT_URL = \"https://dlcdcstreaming.dfs.core.windows.net\"\r\n",
+					"CONTAINER_NAME = \"dlcdcstreaming\"\r\n",
+					"\r\n",
+					"clean_old_blobs(STORAGE_ACCOUNT_URL, CONTAINER_NAME)"
+				],
+				"execution_count": null
+			}
+		]
+	}
+}
