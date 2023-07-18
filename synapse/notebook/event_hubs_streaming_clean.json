@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "dbcfaad7-eddd-4c88-b40b-4037d19df41f"
+				"spark.autotune.trackingId": "9858a42e-8e62-483b-9e2a-ebd55fcb7941"
 			}
 		},
 		"metadata": {
@@ -841,9 +841,32 @@
 						"transient": {
 							"deleting": false
 						}
+					},
+					"microsoft": {
+						"language": "sparksql"
 					}
 				},
 				"source": [
+					"%%sql \r\n",
+					"CREATE TABLE QuantityPerSupplier AS\r\n",
+					"SELECT \r\n",
+					"    SupplierID,\r\n",
+					"    SUM(QuantityPerOuter) AS TotalQuantityPerOuter,\r\n",
+					"    LAG(TotalPreviousQuantityPerOuter) OVER (PARTITION BY SupplierID ORDER BY EffDateTo) AS PreviousTotalQuantityPerOuter\r\n",
+					"FROM \r\n",
+					"(\r\n",
+					"    SELECT \r\n",
+					"        SupplierID,\r\n",
+					"        EffDateTo,\r\n",
+					"        CASE WHEN CurrentFlag = 1 THEN QuantityPerOuter ELSE 0 END AS QuantityPerOuter,\r\n",
+					"        SUM(CASE WHEN CurrentFlag = 0 THEN QuantityPerOuter ELSE 0 END) OVER (PARTITION BY SupplierID ORDER BY EffDateTo) AS TotalPreviousQuantityPerOuter\r\n",
+					"    FROM \r\n",
+					"        StockItems_SCD2\r\n",
+					") subquery\r\n",
+					"WHERE \r\n",
+					"    CurrentFlag = 1\r\n",
+					"GROUP BY \r\n",
+					"    SupplierID;\r\n",
 					""
 				],
 				"execution_count": null
